@@ -1,0 +1,1 @@
+# standard_of_living_united_states
