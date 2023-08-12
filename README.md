@@ -23,4 +23,5 @@ Once I gather all necessary data that will fit my methodology I will create the 
 2. Top choices and text generator to explain the choice.
 
 # requirements # 
-`bs4` `re` `sklearn` `joblib` `plotly` `Google API`
+`bs4` `re` `sklearn` `joblib` `plotly` `Google API` `concurrent.futures`
+
