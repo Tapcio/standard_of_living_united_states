@@ -98,7 +98,7 @@ def get_number_of_venues_in_the_area(
     return len(place_type_list)
 
 
-def process_row(row: pd.Series, keyword: list) -> function:
+def process_row(row: pd.Series, keyword: list):
     """
     Helper function that is handling the processing of each individual row from the DataFrame.
     It receives "row" which is the Series of an entire row, then it runs the function with selected
@@ -113,15 +113,15 @@ def process_row(row: pd.Series, keyword: list) -> function:
     return get_number_of_venues_in_the_area(name, latitude, longitude, keyword=keyword)
 
 
-def main(places_df: pd.DataFrame, max_workers: int) -> None:
+def main(places_df: pd.DataFrame, max_workers: int, keywords: list) -> None:
     """
     Multiprocessing function. It helps to run the get_number_of_venues_in_the_area() faster.
     Doesn't return anything. Instead it is updating the dataframe that was passed to the function.
     Attributes:
         DataFrame: places_df
         int: max_workers
+        list: keywords -> example: ["restaurant", "bar", "cafe", "supermarket", "park"]
     """
-    keywords = ["restaurant", "bar", "cafe"]
 
     for keyword in keywords:
         column_name = f"{keyword}s"  # Create column name based on keyword

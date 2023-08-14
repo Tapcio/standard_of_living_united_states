@@ -10,20 +10,40 @@ US_AVERAGE_BURGLARY = 500.1
 US_AVERAGE_THEFT = 2042.8
 US_AVERAGE_MOTOR_VEHICLE_THEFT = 284
 
-def scrape_missing_crime_data(url_crime: str) -> list:
+
+def scrape_areavibes_website_for_soup(url: str) -> BeautifulSoup:
     """
-    Scrapes the crime % of the annual averages for each place.
-    Attributes:
-        url_crime
+    Takes the url to the website and returns html soup
+    Attribute:
+        str: url
     """
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
+    request_soup = requests.get(url, headers=headers)
+    soup = BeautifulSoup(request_soup.content, "html.parser")
+    return soup
 
-    request_crime = requests.get(url_crime, headers=headers)
-    soup = BeautifulSoup(request_crime.content, "html.parser")
-    violent_crime = soup.find("div", class_="sfs__fact b")
-    violent_crime_element = violent_crime.find("span", class_="circle-text")
+
+def scrape_missing_school_ratings(soup: str) -> str:
+    """
+    Scrapes the school ratings in the area.
+    Attributes:
+        str: soup
+    """
+    school_rating = soup.find("div", class_="sfs__score").text
+
+    return school_rating
+
+
+def scrape_missing_crime_data(soup: str) -> list:
+    """
+    Scrapes the crime % of the annual averages for each place.
+    Attributes:
+        str: soup
+    """
+    violent_crime_soup = soup.find("div", class_="sfs__fact b")
+    violent_crime_element = violent_crime_soup.find("span", class_="circle-text")
 
     if violent_crime_element:
         violent_crime_percentage = violent_crime_element.get_text(strip=True)
@@ -51,9 +71,11 @@ def scrape_missing_crime_data(url_crime: str) -> list:
         return [violent_crime_percentage / 100, property_crime_percentage / 100]
 
 
-def create_link_for_crime_data_first_attempt(type_of_place: str, name: str, name_with_state: str) -> str:
+def create_link_first_attempt(
+    type_of_place: str, name: str, name_with_state: str, subdirectory: str
+) -> str:
     """
-    Creates a link based on the details of the place. 1st attempt, as combinations of dynamic part of the link 
+    Creates a link based on the details of the place. 1st attempt, as combinations of dynamic part of the link
     might be sometimes different.
     Attributes:
         str: type_of_place
@@ -77,12 +99,16 @@ def create_link_for_crime_data_first_attempt(type_of_place: str, name: str, name
         link_end = f"{city_or_town}-{place_split[-1]}"
     else:
         return "Couldn't work-out the link."
-    return f"{link_beginning}{link_end}/crime"
+    return scrape_areavibes_website_for_soup(
+        f"{link_beginning}{link_end}/{subdirectory}"
+    )
 
 
-def create_link_for_crime_data_second_attempt(type_of_place: str, name: str, name_with_state: str):
+def create_link_second_attempt(
+    type_of_place: str, name: str, name_with_state: str, subdirectory: str
+) -> str:
     """
-    Creates a link based on the details of the place. 2st attempt, as combinations of dynamic part of the link 
+    Creates a link based on the details of the place. 2st attempt, as combinations of dynamic part of the link
     might be sometimes different.
     Attributes:
         str: type_of_place
@@ -106,12 +132,44 @@ def create_link_for_crime_data_second_attempt(type_of_place: str, name: str, nam
         link_end = f"{city_or_town}-{place_split[-1]}"
     else:
         return "Couldn't work-out the link."
-    return f"{link_beginning}{link_end}/crime"
+    return scrape_areavibes_website_for_soup(
+        f"{link_beginning}{link_end}/{subdirectory}"
+    )
 
 
-def fill_missing_crime_values(places_df: pd.DataFrame):
+def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
+    for index, row in places_df.iterrows():
+        if (row["school_rating"] == "us") or (row["school_rating"] == "no data"):
+            type_of_place = row["type_of_place"]
+            name = row["name"]
+            name_with_state = row["name_with_state"]
+
+            print(f"Processing {name_with_state}")
+
+            try:
+                link = create_link_first_attempt(
+                    type_of_place, name, name_with_state, "schools"
+                )
+                school_rating = scrape_missing_school_ratings(link)
+                places_df.at[index, "school_rating"] = school_rating
+            except Exception as e:
+                print(f"Processing failed with error: {e}")
+                try:
+                    link = create_link_second_attempt(
+                        type_of_place, name, name_with_state, "schools"
+                    )
+                    school_rating = scrape_missing_school_ratings(link)
+                    places_df.at[index, "school_rating"] = school_rating
+                except Exception as e:
+                    print(f"Secondary processing failed with error: {e}")
+                    places_df.at[index, "school_rating"] = "no data"
+
+    return places_df
+
+
+def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Fills missing crime values if data is missing. Values are based on the scraped 
+    Fills missing crime values if data is missing. Values are based on the scraped
     percentages of average crimes in US. Then multiplied times the average to get into
     the final value.
     Attributes:
@@ -126,8 +184,11 @@ def fill_missing_crime_values(places_df: pd.DataFrame):
                     violent_crime_percentage,
                     property_crime_percentage,
                 ) = scrape_missing_crime_data(
-                    create_link_for_crime_data_first_attempt(
-                        row["type_of_place"], row["name"], row["name_with_state"]
+                    create_link_first_attempt(
+                        row["type_of_place"],
+                        row["name"],
+                        row["name_with_state"],
+                        "crime",
                     )
                 )
                 places_df.at[index, "Assault"] = (
@@ -158,8 +219,11 @@ def fill_missing_crime_values(places_df: pd.DataFrame):
                         violent_crime_percentage,
                         property_crime_percentage,
                     ) = scrape_missing_crime_data(
-                        create_link_for_crime_data_second_attempt(
-                            row["type_of_place"], row["name"], row["name_with_state"]
+                        create_link_second_attempt(
+                            row["type_of_place"],
+                            row["name"],
+                            row["name_with_state"],
+                            "crime",
                         )
                     )
                     places_df.at[index, "Assault"] = (

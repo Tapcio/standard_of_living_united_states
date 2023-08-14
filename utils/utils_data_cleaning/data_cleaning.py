@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 
 LINK_LENGTH_FIVE = 5
 LINK_LENGTH_FOUR = 4
@@ -65,7 +66,7 @@ def remove_special_character_school_rating(school_rating: str) -> str:
     Attributes:
         str: school_rating
     """
-    return school_rating.replace("Â", "")
+    return school_rating.replace("Â", "").replace("\xa0", "").strip()
 
 
 def remove_special_character_nightlife_rating(nightlife_rating: str) -> str:
@@ -154,24 +155,23 @@ def remove_niche_prefix(link: str) -> str:
         return link[len(prefix1) :][:-1]
 
 
-def create_rent_to_sell_value_ratio(places_dataframe: pd.DataFrame) -> pd.DataFrame:
+def create_rent_to_sell_value_ratio(places_df: pd.DataFrame) -> pd.DataFrame:
     """
     Creates column with rent to sell ratio
     Attributes:
-        DataFrame: places_dataframe
+        DataFrame: places_df
     """
-    filtered_places = places_dataframe.copy()
-    filtered_places["median_home_value"] = pd.to_numeric(
-        filtered_places["median_home_value"], errors="coerce"
+    places_df["median_home_value"] = pd.to_numeric(
+        places_df["median_home_value"], errors="coerce"
     )
-    filtered_places["median_rent"] = pd.to_numeric(
-        filtered_places["median_rent"], errors="coerce"
+    places_df["median_rent"] = pd.to_numeric(
+        places_df["median_rent"], errors="coerce"
     )
-    filtered_places["rent_sell_value_ratio"] = (
-        filtered_places["median_rent"] / filtered_places["median_home_value"]
+    places_df["rent_sell_value_ratio"] = (
+        places_df["median_rent"] / places_df["median_home_value"]
     )
 
-    return filtered_places
+    return places_df
 
 
 def add_name_with_state(link: str) -> str:
