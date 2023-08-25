@@ -1,21 +1,7 @@
 from datetime import datetime
 from meteostat import Monthly, Point
 import pandas as pd
-
-MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
+from config import MONTH_NAMES
 
 
 def return_average_monthly_temp(latitude: float, longitude: float) -> pd.DataFrame:
@@ -67,24 +53,28 @@ def create_temperature_df(places_df: pd.DataFrame) -> pd.DataFrame:
         temp_df["unique_name"] = places_df["unique_name"]
     return temp_df
 
+
 def fill_missing_weather_values(places_df: pd.DataFrame) -> pd.DataFrame:
-    
     for i, month in enumerate(MONTH_NAMES):
         tavg_col = f"{month}_tavg"
         prcp_col = f"{month}_prcp"
-        
+
         tavg_avg_col = f"{month}_tavg_avg"
         prcp_avg_col = f"{month}_prcp_avg"
-        
-        prev_month = MONTH_NAMES[(i-1) % 12]
-        next_month = MONTH_NAMES[(i+1) % 12]
-        
-        places_df[tavg_avg_col] = (places_df[f"{prev_month}_tavg"] + places_df[f"{next_month}_tavg"]) / 2
-        places_df[prcp_avg_col] = (places_df[f"{prev_month}_prcp"] + places_df[f"{next_month}_prcp"]) / 2
-        
+
+        prev_month = MONTH_NAMES[(i - 1) % 12]
+        next_month = MONTH_NAMES[(i + 1) % 12]
+
+        places_df[tavg_avg_col] = (
+            places_df[f"{prev_month}_tavg"] + places_df[f"{next_month}_tavg"]
+        ) / 2
+        places_df[prcp_avg_col] = (
+            places_df[f"{prev_month}_prcp"] + places_df[f"{next_month}_prcp"]
+        ) / 2
+
         places_df[tavg_col].fillna(places_df[tavg_avg_col], inplace=True)
         places_df[prcp_col].fillna(places_df[prcp_avg_col], inplace=True)
-        
+
         places_df.drop(columns=[tavg_avg_col, prcp_avg_col], inplace=True)
-    
+
     return places_df

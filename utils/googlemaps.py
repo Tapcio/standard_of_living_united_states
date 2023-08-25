@@ -1,14 +1,13 @@
 import googlemaps
 import requests
-import yaml
 import time
 import concurrent.futures
 import pandas as pd
+import utils as u
 
-with open("config.yml", "r") as f:
-    config = yaml.safe_load(f)
+data = u.get_config()
 
-GOOGLE_MAPS_API_KEY = config["API_KEY"]
+GOOGLE_MAPS_API_KEY = data["GOOGLE_MAPS_API_KEY"]
 
 
 def get_map_coordinates_by_place_name(place_name: str) -> dict:
@@ -48,11 +47,11 @@ def add_missing_map_coordinates_to_dataframe(places_df: pd.DataFrame) -> pd.Data
             )
             try:
                 coordinates = get_map_coordinates_by_place_name(row["name_with_state"])
-                places_df.at[index, "latitude"] = coordinates["latitude"]
-                places_df.at[index, "longitude"] = coordinates["longitude"]
+                places_df.loc[index, "latitude"] = coordinates["latitude"]
+                places_df.loc[index, "longitude"] = coordinates["longitude"]
             except:
-                places_df.at[index, "latitude"] = None
-                places_df.at[index, "longitude"] = None
+                places_df.loc[index, "latitude"] = None
+                places_df.loc[index, "longitude"] = None
             print(
                 f"Coordinates: {coordinates['latitude']}, {coordinates['longitude']} added."
             )

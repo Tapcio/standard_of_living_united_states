@@ -1,22 +1,19 @@
-import yaml
 import pandas as pd
 from sqlalchemy import create_engine
 
-from utils.utils import get_config
+import utils.utils as u
 
-config = get_config()
+data = u.get_config()
 
-MYSQL_HOST = config["MYSQL_HOST"]
-MYSQL_USER = config["MYSQL_USER"]
-MYSQL_PASSWORD = config["MYSQL_PASSWORD"]
-MYSQL_DATABASE = config["MYSQL_DATABASE"]
+MYSQL_HOST = data["MYSQL_HOST"]
+MYSQL_USER = data["MYSQL_USER"]
+MYSQL_PASSWORD = data["MYSQL_PASSWORD"]
+MYSQL_DATABASE = data["MYSQL_DATABASE"]
 
 
-def load_database_to_dataframe(table_name: str) -> pd.DataFrame:
+def connect_to_db():
     """
-    Returns data from the database in the form of DataFrame.
-    Attributes:
-        str: table_name
+    Establishes a database connection and returns the engine.
     """
     mysql_host = MYSQL_HOST
     mysql_user = MYSQL_USER
@@ -28,11 +25,30 @@ def load_database_to_dataframe(table_name: str) -> pd.DataFrame:
         echo=True,  # Set echo to True to see SQL queries being executed
     )
 
+    return engine
+
+
+def disconnect_from_db(engine):
+    """
+    Closes the database connection.
+    """
+    engine.dispose()
+
+
+def load_database_to_dataframe(table_name: str) -> pd.DataFrame:
+    """
+    Returns data from the database in the form of DataFrame.
+    Attributes:
+        str: table_name
+    """
+
+    engine = connect_to_db()
+
     query = f"SELECT * FROM {table_name}"
 
     places_df = pd.read_sql(query, con=engine)
 
-    engine.dispose()
+    disconnect_from_db(engine)
 
     return places_df
 
@@ -44,16 +60,8 @@ def save_dataframe_to_database(places_df: pd.DataFrame, table_name: str) -> None
         str: table_name
         DataFrame: places_df
     """
-    mysql_host = MYSQL_HOST
-    mysql_user = MYSQL_USER
-    mysql_password = MYSQL_PASSWORD
-    mysql_database = MYSQL_DATABASE
-
-    engine = create_engine(
-        f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}/{mysql_database}",
-        echo=True,  # Set echo to True to see SQL queries being executed
-    )
+    engine = connect_to_db()
 
     places_df.to_sql(name=table_name, con=engine, if_exists="replace", index=False)
 
-    engine.dispose()
+    disconnect_from_db(engine)
