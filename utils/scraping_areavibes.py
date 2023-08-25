@@ -1,14 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
-
-US_AVERAGE_ASSAULT = 282.7
-US_AVERAGE_MURDER = 6.1
-US_AVERAGE_RAPE = 40.7
-US_AVERAGE_ROBBERY = 135.5
-US_AVERAGE_BURGLARY = 500.1
-US_AVERAGE_THEFT = 2042.8
-US_AVERAGE_MOTOR_VEHICLE_THEFT = 284
+import numpy as np
+from config import US_AVERAGE_CRIMES
 
 
 def scrape_areavibes_website_for_soup(url: str) -> BeautifulSoup:
@@ -48,7 +42,7 @@ def scrape_missing_crime_data(soup: str) -> list:
     if violent_crime_element:
         violent_crime_percentage = violent_crime_element.get_text(strip=True)
     else:
-        violent_crime_percentage = "no data"
+        violent_crime_percentage = np.nan
 
     property_crime = soup.find("div", class_="sfs__fact c")
     property_crime_element = property_crime.find("span", class_="circle-text")
@@ -56,7 +50,7 @@ def scrape_missing_crime_data(soup: str) -> list:
     if property_crime_element:
         property_crime_percentage = property_crime_element.get_text(strip=True)
     else:
-        property_crime_percentage = "no data"
+        property_crime_percentage = np.nan
 
     violent_crime_percentage = int(
         violent_crime_percentage.replace("%", "").replace(",", "")
@@ -139,7 +133,7 @@ def create_link_second_attempt(
 
 def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
     for index, row in places_df.iterrows():
-        if (row["school_rating"] == "us") or (row["school_rating"] == "no data"):
+        if (row["school_rating"] == "us") or (row["school_rating"] == np.nan):
             type_of_place = row["type_of_place"]
             name = row["name"]
             name_with_state = row["name_with_state"]
@@ -162,7 +156,7 @@ def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
                     places_df.at[index, "school_rating"] = school_rating
                 except Exception as e:
                     print(f"Secondary processing failed with error: {e}")
-                    places_df.at[index, "school_rating"] = "no data"
+                    places_df.at[index, "school_rating"] = np.nan
 
     return places_df
 
@@ -172,11 +166,15 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
     Fills missing crime values if data is missing. Values are based on the scraped
     percentages of average crimes in US. Then multiplied times the average to get into
     the final value.
+
+    First and Second Attempts are using different combinations of links, as for example
+    some areas might be considered as suburbs, or neighbourhoods in Niche.com, or Areavibes,
+    so this is to have the additional try if the area isn't found the first time.
     Attributes:
         DataFrame: places_df
     """
     for index, row in places_df.iterrows():
-        if row["Assault"] == "no data":
+        if row["Assault"] == np.nan:
             print(f"Processing {places_df['name_with_state'][index]}")
 
             try:
@@ -192,23 +190,26 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
                     )
                 )
                 places_df.at[index, "Assault"] = (
-                    violent_crime_percentage * US_AVERAGE_ASSAULT
+                    violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_ASSAULT"]
                 )
                 places_df.at[index, "Murder"] = (
-                    violent_crime_percentage * US_AVERAGE_MURDER
+                    violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_MURDER"]
                 )
-                places_df.at[index, "Rape"] = violent_crime_percentage * US_AVERAGE_RAPE
+                places_df.at[index, "Rape"] = (
+                    violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_RAPE"]
+                )
                 places_df.at[index, "Robbery"] = (
-                    violent_crime_percentage * US_AVERAGE_ROBBERY
+                    violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_ROBBERY"]
                 )
                 places_df.at[index, "Burglary"] = (
-                    property_crime_percentage * US_AVERAGE_BURGLARY
+                    property_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_BURGLARY"]
                 )
                 places_df.at[index, "Theft"] = (
-                    property_crime_percentage * US_AVERAGE_THEFT
+                    property_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_THEFT"]
                 )
                 places_df.at[index, "Motor Vehicle Theft"] = (
-                    property_crime_percentage * US_AVERAGE_MOTOR_VEHICLE_THEFT
+                    property_crime_percentage
+                    * US_AVERAGE_CRIMES["US_AVERAGE_MOTOR_VEHICLE_THEFT"]
                 )
 
             except AttributeError:
@@ -227,25 +228,31 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
                         )
                     )
                     places_df.at[index, "Assault"] = (
-                        violent_crime_percentage * US_AVERAGE_ASSAULT
+                        violent_crime_percentage
+                        * US_AVERAGE_CRIMES["US_AVERAGE_ASSAULT"]
                     )
                     places_df.at[index, "Murder"] = (
-                        violent_crime_percentage * US_AVERAGE_MURDER
+                        violent_crime_percentage
+                        * US_AVERAGE_CRIMES["US_AVERAGE_MURDER"]
                     )
                     places_df.at[index, "Rape"] = (
-                        violent_crime_percentage * US_AVERAGE_RAPE
+                        violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_RAPE"]
                     )
                     places_df.at[index, "Robbery"] = (
-                        violent_crime_percentage * US_AVERAGE_ROBBERY
+                        violent_crime_percentage
+                        * US_AVERAGE_CRIMES["US_AVERAGE_ROBBERY"]
                     )
                     places_df.at[index, "Burglary"] = (
-                        property_crime_percentage * US_AVERAGE_BURGLARY
+                        property_crime_percentage
+                        * US_AVERAGE_CRIMES["US_AVERAGE_BURGLARY"]
                     )
                     places_df.at[index, "Theft"] = (
-                        property_crime_percentage * US_AVERAGE_THEFT
+                        property_crime_percentage
+                        * US_AVERAGE_CRIMES["US_AVERAGE_THEFT"]
                     )
                     places_df.at[index, "Motor Vehicle Theft"] = (
-                        property_crime_percentage * US_AVERAGE_MOTOR_VEHICLE_THEFT
+                        property_crime_percentage
+                        * US_AVERAGE_CRIMES["US_AVERAGE_MOTOR_VEHICLE_THEFT"]
                     )
 
                 except AttributeError:

@@ -3,44 +3,13 @@ import re
 import time
 import requests
 import pandas as pd
+import numpy as np
 
-MAX_RETRIES = 3
-SCHOOL_INDEX = 0
-NIGHTLIFE_INDEX = 3
-FAMILIES_INDEX = 4
-CRIME_CATEGORIES = [
-    "Assault",
-    "Murder",
-    "Rape",
-    "Robbery",
-    "Burglary",
-    "Theft",
-    "Motor Vehicle Theft",
-]
-AGE_GROUP_NAMES = [
-    "under_ten",
-    "ten_to_seventeen",
-    "eighteen_to_twentyfour",
-    "twentyfive_to_thirtyfour",
-    "thirtyfive_to_fourtyfour",
-    "fourtyfive_to_fiftyfour",
-    "fiftyfive_to_sixtyfour",
-    "over_sixtyfive",
-]
-
-
-def retry_request(url: str, params: dict, max_retries=MAX_RETRIES) -> None:
-    retries = 0
-    while retries < max_retries:
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            return response
-        except requests.RequestException as e:
-            print(f"Request failed: {e}")
-            retries += 1
-            time.sleep(5)
-    return None
+from utils.config import (
+    AGE_GROUP_NAMES,
+    VIOLENT_CRIMES_COLUMNS,
+    NON_VIOLENT_CRIMES_COLUMNS,
+)
 
 
 def scrape_get_soup_for_place_details(link: str):
@@ -49,10 +18,9 @@ def scrape_get_soup_for_place_details(link: str):
     Attributes:
         str: link to the website
     """
-    url = link
     apikey = "e1054a6fb0009ec0b07a23798a6e63aafa8bc84d"
     params = {
-        "url": url,
+        "url": link,
         "apikey": apikey,
         "js_render": "true",
         "antibot": "true",
@@ -87,30 +55,25 @@ def scrape_get_soup_for_places_and_links(page_number: int) -> BeautifulSoup:
 
 def scrape_ratings(soup: BeautifulSoup) -> dict:
     """
-    Returns dictionary with ratings of school, nightlife and families from Niche.com website
+    Scrapes the soup using indices. 0 for school, 3 for nightlife and 4 for families
+    Returns dictionary with ratings of school, nightlife and families from Niche.com website.
 
     Attributes:
         soup: html soup
     """
     ratings_card = soup.find_all("li", class_="ordered__list__bucket__item")
     try:
-        school_rating = (
-            ratings_card[SCHOOL_INDEX].find("div", class_="niche__grade").text[-2:]
-        )
+        school_rating = ratings_card[0].find("div", class_="niche__grade").text[-2:]
     except:
-        school_rating = "no data"
+        school_rating = np.nan
     try:
-        nightlife_rating = (
-            ratings_card[NIGHTLIFE_INDEX].find("div", class_="niche__grade").text
-        )
+        nightlife_rating = ratings_card[3].find("div", class_="niche__grade").text
     except:
-        nightlife_rating = "no data"
+        nightlife_rating = np.nan
     try:
-        families_rating = (
-            ratings_card[FAMILIES_INDEX].find("div", class_="niche__grade").text
-        )
+        families_rating = ratings_card[4].find("div", class_="niche__grade").text
     except:
-        families_rating = "no data"
+        families_rating = np.nan
 
     ratings_dictionary = {
         "school_rating": school_rating,
@@ -133,7 +96,7 @@ def scrape_type_of_place(soup: BeautifulSoup) -> dict:
         type_of_place = soup.find("li", class_="postcard__attr").text
         type_of_place_dictionary = {"type_of_place": type_of_place}
     except:
-        type_of_place_dictionary = {"type_of_place": "no data"}
+        type_of_place_dictionary = {"type_of_place": np.nan}
     return type_of_place_dictionary
 
 
@@ -155,8 +118,8 @@ def scrape_rent_vs_own(soup: BeautifulSoup) -> dict:
         }
     except:
         rent_vs_own_dictionary = {
-            "rented_percentage": "no data",
-            "owned_percentage": "no data",
+            "rented_percentage": np.nan,
+            "owned_percentage": np.nan,
         }
     return rent_vs_own_dictionary
 
@@ -169,13 +132,13 @@ def scrape_population_and_real_estate(soup: BeautifulSoup) -> dict:
         soup: html soup
     """
 
-    # Assigning "no data" in case value isn't available in the soup
-    population = "No data"
+    # Assigning NaN in case value isn't available in the soup
+    population = np.nan
 
-    median_home_value = "No data"
-    median_rent = "No data"
-    area_feel = "No data"
-    median_household_income = "No data"
+    median_home_value = np.nan
+    median_rent = np.nan
+    area_feel = np.nan
+    median_household_income = np.nan
     soup_span_elements = soup.find_all("span")
 
     for i, span in enumerate(soup_span_elements):
@@ -208,15 +171,16 @@ def scrape_crime_data(soup: BeautifulSoup) -> dict:
     Attributes:
         soup: html soup
     """
+    crime_categories = [VIOLENT_CRIMES_COLUMNS, NON_VIOLENT_CRIMES_COLUMNS]
     crime_soup = soup.find_all("section", class_="block--one-two-one")
     crime_dict = {}
 
-    for crime in CRIME_CATEGORIES:
+    for crime in crime_categories:
         pattern = rf'<div class="fact__table__row__label">{crime}</div><div class="fact__table__row__value">([\d.]+)</div>'
         try:
             crime_dict[crime] = re.findall(pattern, str(crime_soup))[0]
         except:
-            crime_dict[crime] = "no data"
+            crime_dict[crime] = np.nan
     return crime_dict
 
 
@@ -262,97 +226,3 @@ def get_place_names_and_links_for_page(soup: BeautifulSoup) -> list:
         links.append(link)
 
     return place_names, links
-
-
-def scrape_all_places_and_links() -> None:
-    """
-    Triggers scraping places and links and saves to the .csv
-    Attributes:
-        None
-    """
-    page_range = range(105, 380)
-    places_and_links_list = []
-
-    for page_number in page_range:
-        print(f"Scraping now for page {page_number}.")
-        soup = scrape_get_soup_for_places_and_links(page_number)
-        place_names, links = get_place_names_and_links_for_page(soup)
-
-        for name, link in zip(place_names, links):
-            places_and_links_list.append({"name": name, "link": link})
-
-        df = pd.DataFrame(places_and_links_list)
-        df.to_csv("niche_places_and_links.csv", index=False)
-        print(f"file saved for page number {page_number}.")
-
-    print("Scraping Done.")
-
-
-def scrape_all_info_from_place() -> None:
-    """
-    Function calls all scrape functions for Niche.com and merges all dictionaries into one.
-    All dictionaries are appended to the DataFrame which is periodically saved into the csv file.
-    Attributes:
-        None
-    """
-    scraped_data_dataframe = pd.DataFrame()
-    places_to_scrape = pd.read_csv("niche_places_and_links.csv")
-
-    for index, row in places_to_scrape.iterrows():
-        link = row["link"]
-
-        retries = 0
-        while retries < MAX_RETRIES:
-            try:
-                soup = scrape_get_soup_for_place_details(link)
-                if soup is not None:
-                    break
-                else:
-                    print("Failed to get soup, retrying...")
-            except Exception as e:
-                print(f"Scraping  failed: {e}")
-            retries += 1
-            time.sleep(5)
-
-        if soup is None:
-            print(f"Failed to scrape place number {index} after {MAX_RETRIES} retries.")
-        else:
-            place_name = {"name": row["name"]}
-            link = {"link": row["link"]}
-            ratings_dictionary = scrape_ratings(soup)
-            type_of_place = scrape_type_of_place(soup)
-            rent_vs_own = scrape_rent_vs_own(soup)
-            population_and_real_estate = scrape_population_and_real_estate(soup)
-            crime_data = scrape_crime_data(soup)
-            age_groups = scrape_age_groups(soup)
-
-            merged_dict = {
-                key: value
-                for d in (
-                    place_name,
-                    link,
-                    ratings_dictionary,
-                    type_of_place,
-                    rent_vs_own,
-                    population_and_real_estate,
-                    crime_data,
-                    age_groups,
-                )
-                for key, value in d.items()
-            }
-            merged_scraped_data_dataframe = pd.DataFrame([merged_dict])
-            scraped_data_dataframe = pd.concat(
-                [scraped_data_dataframe, merged_scraped_data_dataframe],
-                ignore_index=True,
-            )
-
-            print(f"Scraped place number {index}.")
-
-            if (index + 1) % 10 == 0:
-                scraped_data_dataframe.to_csv("niche_all_scraped_data.csv", index=False)
-                print(f"Saved {index + 1} rows of scraped data.")
-
-    scraped_data_dataframe.to_csv("niche_all_scraped_data.csv", index=False)
-    print(
-        f"All data has been scraped and saved into the folder. Total rows: {len(scraped_data_dataframe)}"
-    )

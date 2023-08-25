@@ -1,8 +1,7 @@
 import haversine as hs
-from haversine import Unit
 import pandas as pd
 
-AREA_WEALTH_THRESHOLD = 0.8  # This is in case the closest areas are very poor and therefore higher chance of much higher crime
+from config import AREA_WEALTH_THRESHOLD
 
 
 def find_closest_places(places_df: pd.DataFrame, place_index: int) -> list:
@@ -23,7 +22,7 @@ def find_closest_places(places_df: pd.DataFrame, place_index: int) -> list:
         if index != place_index and row["state"] == selected_state:
             compared_coordinates = (row["latitude"], row["longitude"])
             distance = hs.haversine(
-                selected_coordinates, compared_coordinates, unit=Unit.KILOMETERS
+                selected_coordinates, compared_coordinates, unit=hs.Unit.KILOMETERS
             )
             if distance < 5:
                 closest_places.append((index, distance))
