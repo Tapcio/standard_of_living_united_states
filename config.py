@@ -2,6 +2,14 @@ import utils.utils as u
 
 data = u.get_config()
 
+GOOGLE_MAPS_API_KEY = data["GOOGLE_MAPS_API_KEY"]
+MYSQL_PASSWORD = data["MYSQL_PASSWORD"]
+MYSQL_HOST = data["MYSQL_HOST"]
+MYSQL_USER = data["MYSQL_USER"]
+MYSQL_DATABASE = data["MYSQL_DATABASE"]
+
+AREA_WEALTH_THRESHOLD = 0.8
+
 US_AVERAGE_CRIMES = {
     "US_AVERAGE_ASSAULT": 282.7,
     "US_AVERAGE_MURDER": 6.1,
@@ -21,6 +29,21 @@ CRIMES_COLUMNS = [
     "Burglary",
     "Theft",
     "Motor Vehicle Theft",
+]
+
+MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 
 VIOLENT_CRIMES_COLUMNS = ["Assault", "Murder", "Rape", "Robbery"]
