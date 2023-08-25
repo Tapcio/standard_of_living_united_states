@@ -1,9 +1,22 @@
 import pandas as pd
 import numpy as np
-import database_operations as dbops
+import utils.database_operations as dbops
 
-from config import US_STATES, CRIMES_COLUMNS, ACTIVITIES_COLUMNS, AREA_FEEL_COLUMNS, WEALTH_COLUMNS, FAMILIES_COLUMNS, PLACES_COLUMNS
-from config import US_AVERAGE_CRIMES, VIOLENT_CRIMES_COLUMNS, NON_VIOLENT_CRIMES_COLUMNS
+from utils.config import (
+    US_STATES,
+    CRIMES_COLUMNS,
+    ACTIVITIES_COLUMNS,
+    AREA_FEEL_COLUMNS,
+    WEALTH_COLUMNS,
+    FAMILIES_COLUMNS,
+    PLACES_COLUMNS,
+)
+from utils.config import (
+    US_AVERAGE_CRIMES,
+    VIOLENT_CRIMES_COLUMNS,
+    NON_VIOLENT_CRIMES_COLUMNS,
+)
+
 
 def remove_special_character_school_rating(school_rating: str) -> str:
     """
@@ -51,7 +64,7 @@ def number_to_int(number: str) -> int:
     try:
         return int(number.replace(",", "").replace("$", ""))
     except:
-        return "No data available"
+        return np.nan
 
 
 def add_missing_type_of_place(link: str) -> str:
@@ -72,7 +85,7 @@ def add_missing_type_of_place(link: str) -> str:
         place_split = link_split_list[4].split("-")
         return f"Suburb of {place_split[-2].capitalize()}, {place_split[-1].upper()}"
     else:
-        return "no data"
+        return np.nan
 
 
 def change_state_abbreviation_to_name(abbreviation: str) -> str:
@@ -146,9 +159,9 @@ def add_name_with_state(link: str) -> str:
     return f"{place}, {city_or_county}, {state}"
 
 
-def reassign_values_to_separate_dataframes() -> None:
+def test_reassign_values_to_separate_dataframes() -> None:
     """
-    Reads the places_raw table from the database and creates separate dataframes from it. Then saves them into the database 
+    Reads the places_raw table from the database and creates separate dataframes from it. Then saves them into the database
     as separate tables:
     - crimes
     - activities
@@ -174,19 +187,40 @@ def reassign_values_to_separate_dataframes() -> None:
     dbops.save_dataframe_to_database(places, "places")
 
 
+def reassign_values_to_separate_dataframes():
+    places_df = dbops.load_database_to_dataframe("places_raw")
+    db_map = (
+        (places_df[CRIMES_COLUMNS], "crimes"),
+        (places_df[ACTIVITIES_COLUMNS], "activities"),
+        (places_df[AREA_FEEL_COLUMNS], "area_feel"),
+        (places_df[WEALTH_COLUMNS], "wealth"),
+        (places_df[FAMILIES_COLUMNS], "families"),
+        (places_df[PLACES_COLUMNS], "places"),
+    )
+
+    db_sanity_check = map(lambda x: dbops.save_dataframe_to_database(*x), db_map)
+
+    if all(db_sanity_check) == True:
+        return True
+    else:
+        return False
+
+
 def convert_values_to_numeric(crimes: pd.DataFrame) -> pd.DataFrame:
     """
-    Transforms floats into ints and "no data" into NaN, so it is easier to fill missing values later.
+    Transforms into floats and "no data" into NaN, so it is easier to fill missing values later.
     Attributes:
         crimes: pd.DataFrame
     """
-    numeric_columns = crimes.columns.difference(['unique_name'])
-    crimes[numeric_columns] = crimes[numeric_columns].applymap(lambda x: float(x) if x != "no data" else np.nan)
-    
+    numeric_columns = crimes.columns.difference(["unique_name"])
+    crimes[numeric_columns] = crimes[numeric_columns].applymap(
+        lambda x: float(x) if x != "no data" else np.nan
+    )
+
     return crimes
 
 
-def add_violent_crimes_ratio(row: pd.Series) -> pd.Series:
+def add_violent_crimes_ratio(row: pd.Series) -> float:
     non_nan_counter = 0
     crime_ratio_sum = 0
 
@@ -197,18 +231,20 @@ def add_violent_crimes_ratio(row: pd.Series) -> pd.Series:
         elif crime_value == 0:
             non_nan_counter += 1
         else:
-            crime_ratio_sum += (crime_value/US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"])
+            crime_ratio_sum += (
+                crime_value / US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"]
+            )
             non_nan_counter += 1
-            
+
     if non_nan_counter == 0:
         non_nan_counter = 1
     else:
         pass
-    
-    return crime_ratio_sum/non_nan_counter
+
+    return crime_ratio_sum / non_nan_counter
 
 
-def add_non_violent_crimes_ratio(row: pd.Series) -> pd.Series:
+def add_non_violent_crimes_ratio(row: pd.Series) -> float:
     non_nan_counter = 0
     crime_ratio_sum = 0
 
@@ -219,37 +255,44 @@ def add_non_violent_crimes_ratio(row: pd.Series) -> pd.Series:
         elif crime_value == 0:
             non_nan_counter += 1
         else:
-            crime_ratio_sum += (crime_value/US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"])
+            crime_ratio_sum += (
+                crime_value / US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"]
+            )
             non_nan_counter += 1
-            
+
     if non_nan_counter == 0:
         non_nan_counter = 1
     else:
         pass
-    
-    return crime_ratio_sum/non_nan_counter
+
+    return crime_ratio_sum / non_nan_counter
+
 
 def fill_nan_values_violent_crimes(row: pd.Series) -> pd.Series:
-    
     for column in VIOLENT_CRIMES_COLUMNS:
         crime_value = row[column]
-        
+
         if np.isnan(crime_value):
-            row[column] = row["violent_crime_ratio"] * US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"]
+            row[column] = (
+                row["violent_crime_ratio"]
+                * US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"]
+            )
         else:
             pass
-    
+
     return row
 
 
 def fill_nan_values_non_violent_crimes(row: pd.Series) -> pd.Series:
-    
     for column in NON_VIOLENT_CRIMES_COLUMNS:
         crime_value = row[column]
-        
+
         if np.isnan(crime_value):
-            row[column] = row["non_violent_crime_ratio"] * US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"]
+            row[column] = (
+                row["non_violent_crime_ratio"]
+                * US_AVERAGE_CRIMES[f"US_AVERAGE_{column.upper()}"]
+            )
         else:
             pass
-    
+
     return row
