@@ -1,6 +1,6 @@
 import pandas as pd
 import time
-
+import utils.data_preprocessing as dc
 from utils.scraping_niche import (
     scrape_get_soup_for_places_and_links,
     get_place_names_and_links_for_page,
@@ -15,11 +15,12 @@ from utils.scraping_niche import (
 from utils.scraping_niche import scrape_crime_data, scrape_age_groups
 
 
-def scrape_all_places_and_links(page_start: int, page_finish: int) -> None:
+def scrape_all_places_and_links(page_start: int, page_finish: int):
     """
     Triggers scraping places and links and saves to the .csv
-    Attributes:
-        None
+    Args:
+        page_start: int
+        page_finish: int
     """
     page_range = range(page_start, page_finish)
     places_and_links_list = []
@@ -39,12 +40,10 @@ def scrape_all_places_and_links(page_start: int, page_finish: int) -> None:
     print("Scraping Done.")
 
 
-def scrape_all_info_from_place() -> None:
+def scrape_all_info_from_place():
     """
     Function calls all scrape functions for Niche.com and merges all dictionaries into one.
     All dictionaries are appended to the DataFrame which is periodically saved into the csv file.
-    Attributes:
-        None
     """
     scraped_data_dataframe = pd.DataFrame()
     places_to_scrape = pd.read_csv("niche_places_and_links.csv")
@@ -107,3 +106,43 @@ def scrape_all_info_from_place() -> None:
     print(
         f"All data has been scraped and saved into the folder. Total rows: {len(scraped_data_dataframe)}"
     )
+
+
+def data_preprocessing_from_raw(places_df: pd.DataFrame):
+    """
+    It runs all functions from the data_preprocessing.py file. These are doing the following:
+        1. Cleaning unwanted values.
+        2. Transforming to desired datatypes
+        3. Creating additional columns based on the data in the dataframe
+        4. Reassigning to desired tables in standard_of_living schema
+    Args:
+        places_df: pd.DataFrame
+    """
+    # Cleaning unwanted values
+    places_df["school_rating"] = places_df["school_rating"].map(
+        dc.remove_special_character_school_rating
+    )
+    places_df["nightlife_rating"] = places_df["nightlife_rating"].map(
+        dc.remove_special_character_nightlife_rating
+    )
+    places_df["families_rating"] = places_df["families_rating"].map(
+        dc.remove_special_character_families_rating
+    )
+    places_df = dc.replace_incorrect_type_of_place(places_df)
+    # Transforming to desired datatypes
+    places_df["population"] = places_df["population"].map(dc.number_to_int)
+    places_df["median_home_value"] = places_df["median_home_value"].map(
+        dc.number_to_int
+    )
+    places_df["median_rent"] = places_df["median_rent"].map(dc.number_to_int)
+    places_df["median_household_income"] = places_df["median_household_income"].map(
+        dc.number_to_int
+    )
+
+    # Creating additional columns
+    places_df["state"] = places_df["link"].map(dc.create_state_from_link)
+    places_df["state"] = places_df["state"].map(dc.change_state_abbreviation_to_name)
+    places_df["name_with_state"] = places_df["link"].map(dc.add_name_with_state)
+    # Reassigning to tables in standard_of_living schema
+    # dc.reassign_values_to_separate_dataframes()
+    return places_df
