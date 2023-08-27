@@ -1,22 +1,20 @@
 from bs4 import BeautifulSoup
 import re
-import time
 import requests
-import pandas as pd
 import numpy as np
 
-from utils.config import (
-    AGE_GROUP_NAMES,
+from config import (
     VIOLENT_CRIMES_COLUMNS,
     NON_VIOLENT_CRIMES_COLUMNS,
+    AGE_GROUP_NAMES,
 )
 
 
 def scrape_get_soup_for_place_details(link: str):
     """
     Returns html soup from the Niche.com Website
-    Attributes:
-        str: link to the website
+    Args:
+        link: str
     """
     apikey = "e1054a6fb0009ec0b07a23798a6e63aafa8bc84d"
     params = {
@@ -35,8 +33,8 @@ def scrape_get_soup_for_place_details(link: str):
 def scrape_get_soup_for_places_and_links(page_number: int) -> BeautifulSoup:
     """
     Returns place names and links to place details from the Niche.com Website
-    Attributes:
-        int: page_number for the website
+    Args:
+        page_number: int
     """
     url = f"https://www.niche.com/places-to-live/search/best-places-to-live/?page={page_number}"
     apikey = "e1054a6fb0009ec0b07a23798a6e63aafa8bc84d"
@@ -58,21 +56,21 @@ def scrape_ratings(soup: BeautifulSoup) -> dict:
     Scrapes the soup using indices. 0 for school, 3 for nightlife and 4 for families
     Returns dictionary with ratings of school, nightlife and families from Niche.com website.
 
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
     ratings_card = soup.find_all("li", class_="ordered__list__bucket__item")
     try:
         school_rating = ratings_card[0].find("div", class_="niche__grade").text[-2:]
-    except:
+    except AttributeError:
         school_rating = np.nan
     try:
         nightlife_rating = ratings_card[3].find("div", class_="niche__grade").text
-    except:
+    except AttributeError:
         nightlife_rating = np.nan
     try:
         families_rating = ratings_card[4].find("div", class_="niche__grade").text
-    except:
+    except AttributeError:
         families_rating = np.nan
 
     ratings_dictionary = {
@@ -88,14 +86,14 @@ def scrape_type_of_place(soup: BeautifulSoup) -> dict:
     """
     Returns dictionary with type of place from Niche.com website
 
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
     # type_of_place_soup = soup.find_all("ul", class_="postcard__attrs")
     try:
         type_of_place = soup.find("li", class_="postcard__attr").text
         type_of_place_dictionary = {"type_of_place": type_of_place}
-    except:
+    except AttributeError:
         type_of_place_dictionary = {"type_of_place": np.nan}
     return type_of_place_dictionary
 
@@ -103,8 +101,8 @@ def scrape_type_of_place(soup: BeautifulSoup) -> dict:
 def scrape_rent_vs_own(soup: BeautifulSoup) -> dict:
     """
     Returns dictionary with % of rented and owned properties within the area from Niche.com website
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
     try:
         rented_percentage_scraped = soup.find(
@@ -116,7 +114,7 @@ def scrape_rent_vs_own(soup: BeautifulSoup) -> dict:
             "rented_percentage": rented_percentage,
             "owned_percentage": 100 - rented_percentage,
         }
-    except:
+    except AttributeError:
         rent_vs_own_dictionary = {
             "rented_percentage": np.nan,
             "owned_percentage": np.nan,
@@ -128,8 +126,8 @@ def scrape_population_and_real_estate(soup: BeautifulSoup) -> dict:
     """
     Returns dictionary with Population, Median Home Value, Median Rent,
     Median Household Income and Area Feel from Niche.com website
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
 
     # Assigning NaN in case value isn't available in the soup
@@ -168,18 +166,19 @@ def scrape_crime_data(soup: BeautifulSoup) -> dict:
     """
     Returns dictionary with Population, Median Home Value, Median Rent,
     Median Household Income and Area Feel from Niche.com website
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
     crime_categories = [VIOLENT_CRIMES_COLUMNS, NON_VIOLENT_CRIMES_COLUMNS]
     crime_soup = soup.find_all("section", class_="block--one-two-one")
     crime_dict = {}
 
     for crime in crime_categories:
-        pattern = rf'<div class="fact__table__row__label">{crime}</div><div class="fact__table__row__value">([\d.]+)</div>'
+        pattern = rf'<div class="fact__table__row__label">{crime}</div><div class="fact__table__row__value">([\
+        \d.]+)</div>'
         try:
             crime_dict[crime] = re.findall(pattern, str(crime_soup))[0]
-        except:
+        except AttributeError:
             crime_dict[crime] = np.nan
     return crime_dict
 
@@ -187,12 +186,12 @@ def scrape_crime_data(soup: BeautifulSoup) -> dict:
 def scrape_age_groups(soup: BeautifulSoup) -> dict:
     """
     Returns dictionary with age groups% from Niche.com website
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
+    age_groups_dictionary = {}
     try:
         age_groups_soup = soup.find("section", class_="block--one-two").text
-        age_groups_dictionary = {}
 
         age_groups_soup_split = age_groups_soup.split("%")
         pattern = r"\d+(?:\.\d+)?$"
@@ -200,17 +199,17 @@ def scrape_age_groups(soup: BeautifulSoup) -> dict:
         for i, age_group_name in enumerate(AGE_GROUP_NAMES):
             percentage = re.search(pattern, age_groups_soup_split[i]).group()
             age_groups_dictionary[age_group_name] = percentage
-    except:
+    except AttributeError:
         pass
 
     return age_groups_dictionary
 
 
-def get_place_names_and_links_for_page(soup: BeautifulSoup) -> list:
+def get_place_names_and_links_for_page(soup: BeautifulSoup) -> tuple:
     """
     Returns 2 lists with place names and links from Niche.com
-    Attributes:
-        soup: html soup
+    Args:
+        soup: BeautifulSoup
     """
     place_names = []
     links = []
