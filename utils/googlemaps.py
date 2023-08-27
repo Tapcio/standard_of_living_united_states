@@ -3,7 +3,7 @@ import requests
 import time
 import concurrent.futures
 import pandas as pd
-import utils as u
+import utils.utils_generic as u
 
 data = u.get_config()
 
@@ -14,8 +14,10 @@ def get_map_coordinates_by_place_name(place_name: str) -> dict:
     """
     Connects to Google API and returns coordinate values using name of the place.
     Returns a dictionary with latitude and longitude
-    Attributes:
-        str: place_name
+    Args:
+        place_name: str
+    Returns:
+        map_coordinates: dict
     """
     gmaps = googlemaps.Client(GOOGLE_MAPS_API_KEY)
     geocode_result = gmaps.geocode(place_name)
@@ -32,8 +34,10 @@ def get_map_coordinates_by_place_name(place_name: str) -> dict:
 def add_missing_map_coordinates_to_dataframe(places_df: pd.DataFrame) -> pd.DataFrame:
     """
     Adds coordinates to the DataFrame if they are missing.
-    Attributes:
-        DataFrame: places_df
+    Args:
+        places_df: pd.DataFrame
+    Returns:
+        places_df: pd.DataFrame
     """
     if "latitude" not in places_df.columns:
         places_df["latitude"] = None
@@ -49,7 +53,7 @@ def add_missing_map_coordinates_to_dataframe(places_df: pd.DataFrame) -> pd.Data
                 coordinates = get_map_coordinates_by_place_name(row["name_with_state"])
                 places_df.loc[index, "latitude"] = coordinates["latitude"]
                 places_df.loc[index, "longitude"] = coordinates["longitude"]
-            except:
+            except AttributeError:
                 places_df.loc[index, "latitude"] = None
                 places_df.loc[index, "longitude"] = None
             print(
@@ -59,15 +63,17 @@ def add_missing_map_coordinates_to_dataframe(places_df: pd.DataFrame) -> pd.Data
 
 
 def get_number_of_venues_in_the_area(
-    name: str, latitude: float, longitude: float, keyword: str, radius=1000
+    latitude: float, longitude: float, keyword: str, radius=1000
 ) -> int:
     """
     Searches for nearby places by using map coordinates. Default Radius is 1000 metres.
-    Attributes:
-        str: name
-        float: latitude
-        float: longitude
-        str: keyword
+    Args:
+        latitude: float
+        longitude: float
+        keyword: str
+        radius: int = 1000
+    Returns:
+        number of venues: int
     """
     base_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     params = {
@@ -80,12 +86,12 @@ def get_number_of_venues_in_the_area(
 
     while True:
         response = requests.get(base_url, params=params)
-        data = response.json()
+        received_data = response.json()
 
-        results = data.get("results", [])
+        results = received_data.get("results", [])
         place_type_list.extend(results)
 
-        next_page_token = data.get("next_page_token")
+        next_page_token = received_data.get("next_page_token")
         time.sleep(
             3
         )  # Necessary to return max values. If smaller than 3 seconds then it may return not enough values.
@@ -102,24 +108,28 @@ def process_row(row: pd.Series, keyword: list):
     Helper function that is handling the processing of each individual row from the DataFrame.
     It receives "row" which is the Series of an entire row, then it runs the function with selected
     values from the row.
-    Attributes:
-        Series: row
-        list: keyword
+    Args:
+        row: series
+        keyword: list
     """
     name = row["name_with_state"]
     latitude = row["latitude"]
     longitude = row["longitude"]
-    return get_number_of_venues_in_the_area(name, latitude, longitude, keyword=keyword)
+
+    return get_number_of_venues_in_the_area(name, latitude, longitude, keyword)
 
 
-def main(places_df: pd.DataFrame, max_workers: int, keywords: list) -> None:
+def multiprocessing_google_maps(
+    places_df: pd.DataFrame, max_workers: int, keywords: list
+) -> pd.DataFrame:
     """
     Multiprocessing function. It helps to run the get_number_of_venues_in_the_area() faster.
-    Doesn't return anything. Instead it is updating the dataframe that was passed to the function.
-    Attributes:
-        DataFrame: places_df
-        int: max_workers
-        list: keywords -> example: ["restaurant", "bar", "cafe", "supermarket", "park"]
+    Args:
+        places_df: pd.DataFrame
+        max_workers: int
+        keywords: list -> Example: ["restaurant", "bar", "cafe", "supermarket", "park"]
+    Returns:
+        places_df: pd.DataFrame
     """
 
     for keyword in keywords:
@@ -132,3 +142,5 @@ def main(places_df: pd.DataFrame, max_workers: int, keywords: list) -> None:
             )
 
         places_df[column_name] = pd.Series(results)
+
+    return places_df

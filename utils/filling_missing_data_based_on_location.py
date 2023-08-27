@@ -8,7 +8,7 @@ def find_closest_places(places_df: pd.DataFrame, place_index: int) -> list:
     """
     Searches for closest places in the 5km radius. Returns list with sorted
     places by the closest distance.
-    Arguments:
+    Args:
         places_df: pd.DataFrame
         place_index: int
     """
@@ -40,7 +40,7 @@ def fill_missing_crime_data(
     If the place is poorer than 80% of the searched place it is skipped, as areas
     poorer than 80% may have much higher crime rates to the searched place, so it
     is to avoid data that is way off.
-    Arguments:
+    Args:
         places_df: pd.DataFrame
         closest_places: list
     """

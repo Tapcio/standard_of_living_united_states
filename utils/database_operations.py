@@ -1,9 +1,12 @@
 import pandas as pd
 from sqlalchemy import create_engine
 
-import utils.utils as u
+from utils import utils_generic
 
-data = u.get_config()
+data = utils_generic.get_config(
+    loc=r"C:\Users\adamz\Documents\standard_of_living\config.yml"
+)
+
 
 MYSQL_HOST = data["MYSQL_HOST"]
 MYSQL_USER = data["MYSQL_USER"]
@@ -39,7 +42,7 @@ def load_database_to_dataframe(table_name: str) -> pd.DataFrame:
     """
     Returns data from the database in the form of DataFrame.
     Attributes:
-        str: table_name
+        table_name: str
     """
 
     engine = connect_to_db()
@@ -57,11 +60,30 @@ def save_dataframe_to_database(places_df: pd.DataFrame, table_name: str) -> None
     """
     Saves the whole dataframe to the database.
     Attributes:
-        str: table_name
-        DataFrame: places_df
+        table_name: str
+        places_df: pd.DataFrame
     """
     engine = connect_to_db()
 
     places_df.to_sql(name=table_name, con=engine, if_exists="replace", index=False)
 
     disconnect_from_db(engine)
+
+
+# def load_data_and_merge():
+
+#     #places = db.load_database_to_dataframe("places")
+#     weather = db.load_database_to_dataframe("weather")
+#     crimes = db.load_database_to_dataframe("crimes")
+#     activities = db.load_database_to_dataframe("activities")
+#     area_feel = db.load_database_to_dataframe("area_feel")
+#     wealth = db.load_database_to_dataframe("wealth")
+#     families = db.load_database_to_dataframe("families")
+
+#     dataframes = [area_feel, wealth, crimes, activities, families, weather]
+
+#     places_full = dataframes[0]
+#     for df in dataframes[1:]:
+#         places_full  = places_full.merge(df, on="unique_name", how="outer")
+
+#     return places_full

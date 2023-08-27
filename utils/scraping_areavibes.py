@@ -8,33 +8,34 @@ from config import US_AVERAGE_CRIMES
 def scrape_areavibes_website_for_soup(url: str) -> BeautifulSoup:
     """
     Takes the url to the website and returns html soup
-    Attribute:
-        str: url
+    Args:
+        url: str
     """
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/114.0.0.0 Safari/537.36"
     }
     request_soup = requests.get(url, headers=headers)
     soup = BeautifulSoup(request_soup.content, "html.parser")
     return soup
 
 
-def scrape_missing_school_ratings(soup: str) -> str:
+def scrape_missing_school_ratings(soup: BeautifulSoup) -> str:
     """
     Scrapes the school ratings in the area.
-    Attributes:
-        str: soup
+    Args:
+        soup: BeautifulSoup
     """
     school_rating = soup.find("div", class_="sfs__score").text
 
     return school_rating
 
 
-def scrape_missing_crime_data(soup: str) -> list:
+def scrape_missing_crime_data(soup: BeautifulSoup) -> list:
     """
     Scrapes the crime % of the annual averages for each place.
-    Attributes:
-        str: soup
+    Args:
+        soup: BeautifulSoup
     """
     violent_crime_soup = soup.find("div", class_="sfs__fact b")
     violent_crime_element = violent_crime_soup.find("span", class_="circle-text")
@@ -67,14 +68,17 @@ def scrape_missing_crime_data(soup: str) -> list:
 
 def create_link_first_attempt(
     type_of_place: str, name: str, name_with_state: str, subdirectory: str
-) -> str:
+) -> str | BeautifulSoup:
     """
     Creates a link based on the details of the place. 1st attempt, as combinations of dynamic part of the link
     might be sometimes different.
-    Attributes:
-        str: type_of_place
-        str: name
-        str: name_with_state
+    Args:
+        subdirectory:
+        type_of_place: str
+        name: str
+        name_with_state: str
+    Returns:
+        str | BeautifulSoup
     """
     link_beginning = r"https://www.areavibes.com/"
 
@@ -100,14 +104,16 @@ def create_link_first_attempt(
 
 def create_link_second_attempt(
     type_of_place: str, name: str, name_with_state: str, subdirectory: str
-) -> str:
+) -> str | BeautifulSoup:
     """
     Creates a link based on the details of the place. 2st attempt, as combinations of dynamic part of the link
     might be sometimes different.
-    Attributes:
-        str: type_of_place
-        str: name
-        str: name_with_state
+    Args:
+        type_of_place: str
+        name: str
+        name_with_state: str
+    Returns:
+        str | BeautifulSoup
     """
     link_beginning = r"https://www.areavibes.com/"
 
@@ -132,6 +138,16 @@ def create_link_second_attempt(
 
 
 def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fills missing school rating if it was not found on Niche.com
+    "us" is the string that is returned from Niche.com if no rating
+    was found
+    Args:
+        places_df: pd.DataFrame
+
+    Returns:
+        places_df: pd.DataFrame
+    """
     for index, row in places_df.iterrows():
         if (row["school_rating"] == "us") or (row["school_rating"] == np.nan):
             type_of_place = row["type_of_place"]
@@ -170,8 +186,8 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
     First and Second Attempts are using different combinations of links, as for example
     some areas might be considered as suburbs, or neighbourhoods in Niche.com, or Areavibes,
     so this is to have the additional try if the area isn't found the first time.
-    Attributes:
-        DataFrame: places_df
+    Args:
+        places_df: pd.DataFrame
     """
     for index, row in places_df.iterrows():
         if row["Assault"] == np.nan:
