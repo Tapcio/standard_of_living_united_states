@@ -1,6 +1,6 @@
-import utils.utils as u
+import utils.utils_generic as u
 
-data = u.get_config()
+data = u.get_config(loc=r"C:\Users\adamz\Documents\standard_of_living\config.yml")
 
 GOOGLE_MAPS_API_KEY = data["GOOGLE_MAPS_API_KEY"]
 MYSQL_PASSWORD = data["MYSQL_PASSWORD"]
@@ -59,6 +59,17 @@ WEALTH_COLUMNS = [
     "median_household_income",
 ]
 
+AGE_GROUP_NAMES = [
+    "under_ten",
+    "ten_to_seventeen",
+    "eighteen_to_twentyfour",
+    "twentyfive_to_thirtyfour",
+    "thirtyfive_to_fourtyfour",
+    "fourtyfive_to_fiftyfour",
+    "fiftyfive_to_sixtyfour",
+    "over_sixtyfive",
+]
+
 AREA_FEEL_COLUMNS = [
     "unique_name",
     "area_feel",
@@ -77,14 +88,6 @@ FAMILIES_COLUMNS = [
     "unique_name",
     "school_rating",
     "families_rating",
-    "under_ten",
-    "ten_to_seventeen",
-    "eighteen_to_twentyfour",
-    "twentyfive_to_thirtyfour",
-    "thirtyfive_to_fourtyfour",
-    "fourtyfive_to_fiftyfour",
-    "fiftyfive_to_sixtyfour",
-    "over_sixtyfive",
 ]
 
 PLACES_COLUMNS = [
