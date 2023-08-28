@@ -14,20 +14,16 @@ This app will contain the following:
 2. Google API:
    * Restaurants, Pubs, Cafes information and density in the near distance of the areas. 
    * Distance and commute time to work from the area.
-3. Climate information in each area.
-4. Django or Flask Website. I haven't decided yet.
+3. Climate information for each area.
+4. Flask Website.
 
-
-Once I gather all necessary data that will fit my methodology I will create the Website with the following:
-
-1. Questionnaire to fill that will enable perfect place predictor.
-2. Top choices and text generator to explain the choice.
 
 <br>
 <br>
-<b>NOTE: This will not be fully functioning website as Niche, or Areavibes, because to do so I'd need accesses to paid APIs, or pay for datasets. As this is only learning project I just focus on the process itself. 
+<b>NOTE 1: This will not be fully functioning website as Niche, or Areavibes, because to do so I'd need accesses to paid APIs, or pay for datasets. As this is only learning project I just focus on the process itself. 
 If one will ever be interested in building something similar, most of the code will be useful to take.</b>
 
+<b>NOTE 2: `config.yml` is not uploaded, as it has api keys and passwords, so you need to create it yourself.</b>
 
 # requirements # 
 `bs4` `sqlalchemy` `sklearn` `joblib` `plotly` `Google API` `concurrent.futures` 
