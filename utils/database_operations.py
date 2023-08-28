@@ -68,22 +68,3 @@ def save_dataframe_to_database(places_df: pd.DataFrame, table_name: str) -> None
     places_df.to_sql(name=table_name, con=engine, if_exists="replace", index=False)
 
     disconnect_from_db(engine)
-
-
-# def load_data_and_merge():
-
-#     #places = db.load_database_to_dataframe("places")
-#     weather = db.load_database_to_dataframe("weather")
-#     crimes = db.load_database_to_dataframe("crimes")
-#     activities = db.load_database_to_dataframe("activities")
-#     area_feel = db.load_database_to_dataframe("area_feel")
-#     wealth = db.load_database_to_dataframe("wealth")
-#     families = db.load_database_to_dataframe("families")
-
-#     dataframes = [area_feel, wealth, crimes, activities, families, weather]
-
-#     places_full = dataframes[0]
-#     for df in dataframes[1:]:
-#         places_full  = places_full.merge(df, on="unique_name", how="outer")
-
-#     return places_full
