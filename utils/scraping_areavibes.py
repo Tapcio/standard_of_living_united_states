@@ -31,7 +31,7 @@ def scrape_missing_school_ratings(soup: BeautifulSoup) -> str:
     return school_rating
 
 
-def scrape_missing_crime_data(soup: BeautifulSoup) -> list:
+def scrape_missing_crime_data(soup: BeautifulSoup) -> tuple:
     """
     Scrapes the crime % of the annual averages for each place.
     Args:
@@ -63,7 +63,7 @@ def scrape_missing_crime_data(soup: BeautifulSoup) -> list:
     if (violent_crime_percentage / 100 > 1) or (property_crime_percentage / 100 > 1):
         return 0, 0
     else:
-        return [violent_crime_percentage / 100, property_crime_percentage / 100]
+        return violent_crime_percentage / 100, property_crime_percentage / 100
 
 
 def create_link_first_attempt(
@@ -106,12 +106,13 @@ def create_link_second_attempt(
     type_of_place: str, name: str, name_with_state: str, subdirectory: str
 ) -> str | BeautifulSoup:
     """
-    Creates a link based on the details of the place. 2st attempt, as combinations of dynamic part of the link
+    Creates a link based on the details of the place. 2nd attempt, as combinations of dynamic part of the link
     might be sometimes different.
     Args:
         type_of_place: str
         name: str
         name_with_state: str
+        subdirectory: str
     Returns:
         str | BeautifulSoup
     """
