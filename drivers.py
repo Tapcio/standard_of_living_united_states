@@ -1,10 +1,14 @@
 import pandas as pd
 import time
-import utils.data_preprocessing as dc
+import utils.data_cleaning as dc
 from utils.scraping_niche import (
     scrape_get_soup_for_places_and_links,
     get_place_names_and_links_for_page,
     scrape_get_soup_for_place_details,
+)
+from utils.scraping_areavibes import (
+    fill_missing_school_ratings,
+    fill_missing_crime_values,
 )
 from utils.scraping_niche import (
     scrape_ratings,
@@ -14,8 +18,10 @@ from utils.scraping_niche import (
 )
 from utils.scraping_niche import scrape_crime_data, scrape_age_groups
 
+from utils import database_operations
 
-def scrape_all_places_and_links(page_start: int, page_finish: int):
+
+def scrape_all_places_and_links_niche(page_start: int, page_finish: int):
     """
     Triggers scraping places and links and saves to the .csv
     Args:
@@ -40,7 +46,7 @@ def scrape_all_places_and_links(page_start: int, page_finish: int):
     print("Scraping Done.")
 
 
-def scrape_all_info_from_place():
+def scrape_all_info_from_place_niche():
     """
     Function calls all scrape functions for Niche.com and merges all dictionaries into one.
     All dictionaries are appended to the DataFrame which is periodically saved into the csv file.
@@ -108,20 +114,23 @@ def scrape_all_info_from_place():
     )
 
 
-def data_preprocessing_from_raw(places_df: pd.DataFrame):
+def data_preprocessing_from_raw(places_df: pd.DataFrame) -> pd.DataFrame:
     """
-    It runs all functions from the data_preprocessing.py file. These are doing the following:
+    It runs all functions from the data_cleaning.py file. These are doing the following:
         1. Cleaning unwanted values.
         2. Transforming to desired datatypes
         3. Creating additional columns based on the data in the dataframe
         4. Reassigning to desired tables in standard_of_living schema
     Args:
         places_df: pd.DataFrame
+    Returns:
+        places_df: pd.DataFrame
     """
     # Cleaning unwanted values
     places_df["school_rating"] = places_df["school_rating"].map(
         dc.remove_special_character_school_rating
     )
+    places_df["school_rating"] = places_df["school_rating"].str.strip()
     places_df["nightlife_rating"] = places_df["nightlife_rating"].map(
         dc.remove_special_character_nightlife_rating
     )
@@ -138,11 +147,49 @@ def data_preprocessing_from_raw(places_df: pd.DataFrame):
     places_df["median_household_income"] = places_df["median_household_income"].map(
         dc.number_to_int
     )
-
+    places_df = dc.create_rent_to_sell_value_ratio(places_df)
+    places_df = dc.fill_missing_rent_and_home_values(places_df)
+    places_df.drop("rent_sell_value_ratio", axis=1, inplace=True)
     # Creating additional columns
     places_df["state"] = places_df["link"].map(dc.create_state_from_link)
     places_df["state"] = places_df["state"].map(dc.change_state_abbreviation_to_name)
+    places_df.drop(places_df[places_df["state"] == ""].index, inplace=True)
     places_df["name_with_state"] = places_df["link"].map(dc.add_name_with_state)
-    # Reassigning to tables in standard_of_living schema
-    # dc.reassign_values_to_separate_dataframes()
+
     return places_df
+
+
+def scrape_areavibes_and_fill_missing_data(places_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Driver function that scrapes Areavibes.com for missing data.
+    Args:
+        places_df: pd.DataFrame
+    Returns:
+        places_df: pd.DataFrame
+    """
+    places_df = fill_missing_school_ratings(places_df)
+    places_df = fill_missing_crime_values(places_df)
+
+    return places_df
+
+
+def fill_remaining_crime_data():
+    """
+    Reads table from the database and assigns to the DataFrame.
+    Fills missing values for crime after attempt by Areavibes was taken to fill missing values after previously
+    scraping Niche.com
+    Saves back to the Database
+    """
+    crimes = database_operations.load_database_to_dataframe("crimes")
+    # In case any values are "no data" (they shouldn't be)
+    try:
+        crimes = dc.convert_crime_values_to_numeric(crimes)
+    except (ValueError, AttributeError):
+        pass
+
+    crimes = crimes.apply(dc.add_violent_crimes_ratio)
+    crimes = crimes.apply(dc.add_non_violent_crimes_ratio)
+    crimes = crimes.apply(dc.fill_nan_values_violent_crimes)
+    crimes = crimes.apply(dc.fill_nan_values_non_violent_crimes)
+
+    database_operations.save_dataframe_to_database(crimes, "crimes")
