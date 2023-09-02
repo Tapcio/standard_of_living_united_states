@@ -39,7 +39,7 @@ def create_temperature_df(places_df: pd.DataFrame) -> pd.DataFrame:
 
         try:
             temp_data = return_average_monthly_temp(latitude, longitude)
-        except Exception as e:
+        except AttributeError:
             continue
 
         for month in temp_data.index:
