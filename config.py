@@ -154,3 +154,18 @@ US_STATES = {
     "WI": "Wisconsin",
     "WY": "Wyoming",
 }
+
+MONTH_TO_SEASON = {
+    "December": "Winter",
+    "January": "Winter",
+    "February": "Winter",
+    "March": "Spring",
+    "April": "Spring",
+    "May": "Spring",
+    "June": "Summer",
+    "July": "Summer",
+    "August": "Summer",
+    "September": "Autumn",
+    "October": "Autumn",
+    "November": "Autumn",
+}
