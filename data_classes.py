@@ -10,30 +10,6 @@ class Places:
     latitude: float
     longitude: float
 
-    def fetch_places_data(self, soup: BeautifulSoup) -> object:
-        place = Places(
-            unique_name=get_unique_name(),
-            name=get.name(),
-            type_of_place=get...
-            ...
-        )
-
-        return place
-
-
-    def get_places_data(self): -> BeautifulSoup:
-        """
-        Some driver function that gets the soup and all the things
-        """
-
-        returns soup
-
-
-    def main():
-        soup = get_places_data()
-        place = fetch_places_data(soup)
-        print(place.unique_name)
-
 
 @dataclass
 class Wealth:
