@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import numpy as np
 from config import US_AVERAGE_CRIMES
+from typing import Optional
 
 
 def scrape_areavibes_website_for_soup(url: str) -> BeautifulSoup:
@@ -67,7 +68,10 @@ def scrape_missing_crime_data(soup: BeautifulSoup) -> tuple:
 
 
 def create_link_first_attempt(
-    type_of_place: str, name: str, name_with_state: str, subdirectory: str
+    type_of_place: str,
+    name: str,
+    name_with_state: str,
+    subdirectory: Optional[str] = "",
 ) -> str | BeautifulSoup:
     """
     Creates a link based on the details of the place. 1st attempt, as combinations of dynamic part of the link
@@ -97,13 +101,17 @@ def create_link_first_attempt(
         link_end = f"{city_or_town}-{place_split[-1]}"
     else:
         return "Couldn't work-out the link."
-    return scrape_areavibes_website_for_soup(
-        f"{link_beginning}{link_end}/{subdirectory}"
-    )
+
+    link = f"{link_beginning}{link_end}/{subdirectory}"
+    print(link)
+    return scrape_areavibes_website_for_soup(link)
 
 
 def create_link_second_attempt(
-    type_of_place: str, name: str, name_with_state: str, subdirectory: str
+    type_of_place: str,
+    name: str,
+    name_with_state: str,
+    subdirectory: Optional[str] = "",
 ) -> str | BeautifulSoup:
     """
     Creates a link based on the details of the place. 2nd attempt, as combinations of dynamic part of the link
@@ -133,9 +141,9 @@ def create_link_second_attempt(
         link_end = f"{city_or_town}-{place_split[-1]}"
     else:
         return "Couldn't work-out the link."
-    return scrape_areavibes_website_for_soup(
-        f"{link_beginning}{link_end}/{subdirectory}"
-    )
+    link = f"{link_beginning}{link_end}/{subdirectory}"
+    print(link)
+    return scrape_areavibes_website_for_soup(link)
 
 
 def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
@@ -162,7 +170,7 @@ def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
                     type_of_place, name, name_with_state, "schools"
                 )
                 school_rating = scrape_missing_school_ratings(link)
-                places_df.at[index, "school_rating"] = school_rating
+                places_df.loc[index, "school_rating"] = school_rating
             except Exception as e:
                 print(f"Processing failed with error: {e}")
                 try:
@@ -170,10 +178,10 @@ def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
                         type_of_place, name, name_with_state, "schools"
                     )
                     school_rating = scrape_missing_school_ratings(link)
-                    places_df.at[index, "school_rating"] = school_rating
+                    places_df.loc[index, "school_rating"] = school_rating
                 except Exception as e:
                     print(f"Secondary processing failed with error: {e}")
-                    places_df.at[index, "school_rating"] = np.nan
+                    places_df.loc[index, "school_rating"] = np.nan
 
     return places_df
 
@@ -274,5 +282,39 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
 
                 except AttributeError:
                     print("Processing failed.")
+
+    return places_df
+
+
+def assign_livability_score_to_all_places(places_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Scrapes Areavibes to get the Livability Score for each place.
+    Args:
+        places_df: pd.DataFrame
+    Returns:
+        places_df: pd.DataFrame
+    """
+    for index, row in places_df.iterrows():
+        try:
+            soup = create_link_first_attempt(
+                row["type_of_place"], row["name"], row["name_with_state"]
+            )
+            livability_score = soup.find("span", class_="cw-score-numerator").get_text(
+                strip=True
+            )
+            places_df.loc[index, "score"] = livability_score
+        except (ValueError, KeyError, AttributeError):
+            print("Processing failed. Retrying...")
+
+            try:
+                soup = create_link_second_attempt(
+                    row["type_of_place"], row["name"], row["name_with_state"]
+                )
+                livability_score = soup.find(
+                    "span", class_="cw-score-numerator"
+                ).get_text(strip=True)
+                places_df.loc[index, "score"] = livability_score
+            except (ValueError, KeyError, AttributeError):
+                print("Processing failed.")
 
     return places_df
