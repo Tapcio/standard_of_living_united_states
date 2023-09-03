@@ -12,10 +12,9 @@ This app will contain the following:
 
 1. Websites scraper (Niche.com, Areavibes.com).
 2. Google API:
-   * Restaurants, Pubs, Cafes information and density in the near distance of the areas. 
-   * Distance and commute time to work from the area.
+   * Restaurants, Pubs, Cafes information and density in the near distance of the areas.
 3. Climate information for each area.
-4. Flask Website.
+4. Streamlit App that shows top 10 records with all details about the area.
 
 
 <br>
@@ -26,6 +25,6 @@ If one will ever be interested in building something similar, most of the code w
 <b>NOTE 2: `config.yml` is not uploaded, as it has api keys and passwords, so you need to create it yourself.</b>
 
 # requirements # 
-`bs4` `sqlalchemy` `sklearn` `joblib` `plotly` `Google API` `concurrent.futures` 
+`bs4` `MySQL` `sqlalchemy` `joblib` `Google API` `concurrent.futures` `streamlit`
 
 
