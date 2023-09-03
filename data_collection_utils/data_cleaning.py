@@ -23,7 +23,12 @@ def remove_special_character_nightlife_rating(nightlife_rating: str) -> str:
     Returns:
         nightlife_rating: str
     """
-    return nightlife_rating.replace("gradeÂ", "").replace("minus", "-").replace(" ", "")
+    return (
+        nightlife_rating.replace("gradeÂ", "")
+        .replace("minus", "-")
+        .replace(" ", "")
+        .strip()
+    )
 
 
 def remove_special_character_families_rating(families_rating: str) -> str:
@@ -34,7 +39,12 @@ def remove_special_character_families_rating(families_rating: str) -> str:
     Returns:
         families_rating: str
     """
-    return families_rating.replace("gradeÂ", "").replace("minus", "-").replace(" ", "")
+    return (
+        families_rating.replace("gradeÂ", "")
+        .replace("minus", "-")
+        .replace(" ", "")
+        .strip()
+    )
 
 
 def create_state_from_link(link: str) -> str:

@@ -1,7 +1,8 @@
 import data_collection_utils.utils_generic as u
 
-data = u.get_config(loc=r"C:\Users\adamz\Documents\standard_of_living\config.yml")
-
+data = u.get_config(
+    loc=r"C:\Users\adamz\PycharmProjects\standard_of_living_united_states\config.yml"
+)
 GOOGLE_MAPS_API_KEY = data["GOOGLE_MAPS_API_KEY"]
 MYSQL_PASSWORD = data["MYSQL_PASSWORD"]
 MYSQL_HOST = data["MYSQL_HOST"]

@@ -4,9 +4,8 @@ from sqlalchemy import create_engine
 from data_collection_utils import utils_generic
 
 data = utils_generic.get_config(
-    loc=r"C:\Users\adamz\Documents\standard_of_living\config.yml"
+    loc=r"C:\Users\adamz\PycharmProjects\standard_of_living_united_states\config.yml"
 )
-
 
 MYSQL_HOST = data["MYSQL_HOST"]
 MYSQL_USER = data["MYSQL_USER"]

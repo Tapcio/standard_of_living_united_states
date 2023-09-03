@@ -47,9 +47,6 @@ def drop_places_with_missing_weather_data(places_df: pd.DataFrame) -> pd.DataFra
     return places_df
 
 
-# places["score"] = places.index + 1
-
-
 def impute_missing_values_knn(
     database_name: str, column_first: int, column_last: int, n_neighbors=5
 ):
