@@ -6,7 +6,7 @@ from sklearn.impute import IterativeImputer
 from sklearn import linear_model
 from typing import Callable
 
-from data_collection_utils import database_operations
+from db_utils import database_operations
 
 
 def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:

@@ -1,7 +1,7 @@
 import pandas as pd
 import data_collection_utils.data_cleaning as dc
 import data_collection_utils.filling_missing_crime_data as fc
-from data_collection_utils import database_operations
+from db_utils import database_operations
 
 
 def data_preprocessing_from_raw(places_df: pd.DataFrame) -> pd.DataFrame:

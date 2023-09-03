@@ -1,7 +1,7 @@
 import pandas as pd
 from data_collection_utils import weather
 from data_collection_utils import preprocessing
-from data_collection_utils import database_connection
+from db_utils import database_connection
 
 import data_collection_utils.data_cleaning as dc
 
