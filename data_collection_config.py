@@ -170,3 +170,47 @@ MONTH_TO_SEASON = {
     "October": "Autumn",
     "November": "Autumn",
 }
+
+SELECT_PART = r"""
+    SELECT
+    f.unique_name
+    FROM families f
+    LEFT JOIN places p ON f.unique_name = p.unique_name
+    LEFT JOIN wealth w ON f.unique_name = w.unique_name
+    LEFT JOIN crimes c ON f.unique_name = c.unique_name
+    LEFT JOIN activities a on f.unique_name = a.unique_name
+    LEFT JOIN area_feel af on f.unique_name = af.unique_name
+"""
+
+FAMILIES_QUERY = """
+    CASE
+        WHEN f.families_rating = 'A+' THEN 1
+        WHEN f.families_rating = 'A' THEN 2
+        WHEN f.families_rating = 'A-' THEN 3
+        WHEN f.families_rating = 'B+' THEN 4
+        WHEN f.families_rating = 'B' THEN 5
+        ELSE 6
+    END,
+"""
+
+SCHOOLS_QUERY = """
+    CASE
+        WHEN f.school_rating = 'A+' THEN 1
+        WHEN f.school_rating = 'A' THEN 2
+        WHEN f.school_rating = 'A-' THEN 3
+        WHEN f.school_rating = 'B+' THEN 4
+        WHEN f.school_rating = 'B' THEN 5
+    ELSE 6
+END,
+"""
+
+NIGHTLIFE_QUERY = """
+    CASE
+        WHEN a.nightlife_rating = 'A+' THEN 1
+        WHEN a.nightlife_rating = 'A' THEN 2
+        WHEN a.nightlife_rating = 'A-' THEN 3
+        WHEN a.nightlife_rating = 'B+' THEN 4
+        WHEN a.nightlife_rating = 'B' THEN 5
+    ELSE 6
+END,
+"""
