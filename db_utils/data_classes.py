@@ -17,7 +17,7 @@ class Wealth(Base):
     unique_name = Column(String, primary_key=True)
     median_home_value = Column(Integer)
     median_rent = Column(Integer)
-    median_household_value = Column(Integer)
+    median_household_income = Column(Integer)
 
 
 class Weather(Base):

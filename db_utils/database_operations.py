@@ -97,37 +97,6 @@ def reassign_values_to_separate_db_tables() -> bool:
         return False
 
 
-def query_all_columns_to_dataclass(list_of_places: list, table_name: str):
-    """
-    Returns results of a query as data_classes.Places objects.
-    Args:
-        list_of_places: list -> List of unique places
-        table_name: str -> Name of the table in the database and sqlalchemy class
-    Returns:
-        dataclass_objects: objects
-    """
-    unique_places = ", ".join(f"'{place}'" for place in list_of_places)
-
-    query = f"SELECT * FROM {table_name.lower()} WHERE unique_name IN ({unique_places})"
-
-    engine = connect_to_db()
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    query_results = session.execute(query)
-
-    dataclass_objects = [
-        Places(
-            unique_name=row.unique_name,
-            name=row.name,
-            type_of_place=row.type_of_place,
-            state=row.state,
-        )
-        for row in query_results
-    ]
-
-    return dataclass_objects
-
-
 def create_sql_query_for_website_responses(
     state: str,
     median_household_income: int,
@@ -219,3 +188,40 @@ def create_sql_query_for_website_responses(
         + limit_query
     )
     return query
+
+
+def query_all_columns_to_dataclass(list_of_places: list, table_name: str):
+    """
+    Returns results of a query as data_classes.Places objects.
+    Args:
+        list_of_places: list -> List of unique places
+        table_name: str -> Name of the table in the database and sqlalchemy class
+    Returns:
+        dataclass_objects: objects
+    """
+    class_table = globals().get(table_name)
+    if class_table is None:
+        raise ValueError(f"Class for table '{table_name}' is not defined.")
+    columns = class_table.__table__.columns
+    unique_places = ", ".join(f"'{place}'" for place in list_of_places)
+
+    query = f"SELECT * FROM {table_name.lower()} WHERE unique_name IN ({unique_places})"
+
+    engine = connect_to_db()
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    query_results = session.execute(query)
+
+    dataclass_objects = [
+        class_table(**{column.key: getattr(row, column.key) for column in columns})
+        for row in query_results
+    ]
+
+    return dataclass_objects
+
+
+test = query_all_columns_to_dataclass(
+    ["chesterbrook-chester-pa", "north-quarter-orlando-fl"], "Weather"
+)
+for x in test:
+    print(x.temp_first_quarter)

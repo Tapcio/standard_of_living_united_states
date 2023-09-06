@@ -214,25 +214,25 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
                         "crime",
                     )
                 )
-                places_df.at[index, "Assault"] = (
+                places_df.at[index, "assault"] = (
                     violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_ASSAULT"]
                 )
-                places_df.at[index, "Murder"] = (
+                places_df.at[index, "murder"] = (
                     violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_MURDER"]
                 )
-                places_df.at[index, "Rape"] = (
+                places_df.at[index, "rape"] = (
                     violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_RAPE"]
                 )
-                places_df.at[index, "Robbery"] = (
+                places_df.at[index, "robbery"] = (
                     violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_ROBBERY"]
                 )
-                places_df.at[index, "Burglary"] = (
+                places_df.at[index, "burglary"] = (
                     property_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_BURGLARY"]
                 )
-                places_df.at[index, "Theft"] = (
+                places_df.at[index, "theft"] = (
                     property_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_THEFT"]
                 )
-                places_df.at[index, "Motor Vehicle Theft"] = (
+                places_df.at[index, "motor_vehicle_theft"] = (
                     property_crime_percentage
                     * US_AVERAGE_CRIMES["US_AVERAGE_MOTOR_VEHICLE_THEFT"]
                 )
@@ -252,30 +252,30 @@ def fill_missing_crime_values(places_df: pd.DataFrame) -> pd.DataFrame:
                             "crime",
                         )
                     )
-                    places_df.at[index, "Assault"] = (
+                    places_df.at[index, "assault"] = (
                         violent_crime_percentage
                         * US_AVERAGE_CRIMES["US_AVERAGE_ASSAULT"]
                     )
-                    places_df.at[index, "Murder"] = (
+                    places_df.at[index, "murder"] = (
                         violent_crime_percentage
                         * US_AVERAGE_CRIMES["US_AVERAGE_MURDER"]
                     )
-                    places_df.at[index, "Rape"] = (
+                    places_df.at[index, "rape"] = (
                         violent_crime_percentage * US_AVERAGE_CRIMES["US_AVERAGE_RAPE"]
                     )
-                    places_df.at[index, "Robbery"] = (
+                    places_df.at[index, "robbery"] = (
                         violent_crime_percentage
                         * US_AVERAGE_CRIMES["US_AVERAGE_ROBBERY"]
                     )
-                    places_df.at[index, "Burglary"] = (
+                    places_df.at[index, "burglary"] = (
                         property_crime_percentage
                         * US_AVERAGE_CRIMES["US_AVERAGE_BURGLARY"]
                     )
-                    places_df.at[index, "Theft"] = (
+                    places_df.at[index, "theft"] = (
                         property_crime_percentage
                         * US_AVERAGE_CRIMES["US_AVERAGE_THEFT"]
                     )
-                    places_df.at[index, "Motor Vehicle Theft"] = (
+                    places_df.at[index, "motor_vehicle_theft"] = (
                         property_crime_percentage
                         * US_AVERAGE_CRIMES["US_AVERAGE_MOTOR_VEHICLE_THEFT"]
                     )

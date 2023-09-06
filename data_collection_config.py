@@ -18,18 +18,18 @@ US_AVERAGE_CRIMES = {
     "US_AVERAGE_ROBBERY": 135.5,
     "US_AVERAGE_BURGLARY": 500.1,
     "US_AVERAGE_THEFT": 2042.8,
-    "US_AVERAGE_MOTOR VEHICLE THEFT": 284.0,
+    "US_AVERAGE_MOTOR_VEHICLE_THEFT": 284.0,
 }
 
 CRIMES_COLUMNS = [
     "unique_name",
-    "Assault",
-    "Murder",
-    "Rape",
-    "Robbery",
-    "Burglary",
-    "Theft",
-    "Motor Vehicle Theft",
+    "assault",
+    "murder",
+    "rape",
+    "robbery",
+    "burglary",
+    "theft",
+    "motor_vehicle_theft",
 ]
 
 MONTH_NAMES = [
@@ -47,9 +47,9 @@ MONTH_NAMES = [
     "December",
 ]
 
-VIOLENT_CRIMES_COLUMNS = ["Assault", "Murder", "Rape", "Robbery"]
+VIOLENT_CRIMES_COLUMNS = ["assault", "murder", "rape", "robbery"]
 
-NON_VIOLENT_CRIMES_COLUMNS = ["Burglary", "Theft", "Motor Vehicle Theft"]
+NON_VIOLENT_CRIMES_COLUMNS = ["burglary", "theft", "motor_vehicle_theft"]
 
 ACTIVITIES_COLUMNS = ["unique_name", "nightlife_rating", "restaurants", "bars", "cafes"]
 
@@ -179,7 +179,7 @@ SELECT_PART = r"""
     LEFT JOIN wealth w ON f.unique_name = w.unique_name
     LEFT JOIN crimes c ON f.unique_name = c.unique_name
     LEFT JOIN activities a on f.unique_name = a.unique_name
-    LEFT JOIN area_feel af on f.unique_name = af.unique_name
+    LEFT JOIN areafeel af on f.unique_name = af.unique_name
 """
 
 FAMILIES_QUERY = """

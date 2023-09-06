@@ -48,13 +48,13 @@ def fill_missing_crime_data(
         selected_row = places_df.loc[place_index]
         selected_places_values = selected_row[
             [
-                "Assault",
-                "Murder",
-                "Rape",
-                "Robbery",
-                "Burglary",
-                "Theft",
-                "Motor Vehicle Theft",
+                "assault",
+                "murder",
+                "rape",
+                "robbery",
+                "burglary",
+                "theft",
+                "motor_vehicle_theft",
             ]
         ]
         if "no data" not in selected_places_values.values:
@@ -66,13 +66,13 @@ def fill_missing_crime_data(
                 > median_income_threshold
             ):
                 for col in [
-                    "Assault",
-                    "Murder",
-                    "Rape",
-                    "Robbery",
-                    "Burglary",
-                    "Theft",
-                    "Motor Vehicle Theft",
+                    "assault",
+                    "murder",
+                    "rape",
+                    "robbery",
+                    "burglary",
+                    "theft",
+                    "motor_vehicle_theft",
                 ]:
                     places_df.at[place_index, col] = selected_places_values[col]
                 break
