@@ -10,6 +10,7 @@ class Places(Base):
     name = Column(String)
     type_of_place = Column(String)
     state = Column(String)
+    link = Column(String)
 
 
 class Wealth(Base):

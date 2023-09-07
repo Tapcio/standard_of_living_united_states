@@ -1,8 +1,7 @@
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
-from data_classes import Places, Activities, AreaFeel, Crimes, Wealth, Weather, Families
 
-from database_connection import connect_to_db, disconnect_from_db
+from db_utils.database_connection import connect_to_db, disconnect_from_db
 
 from data_collection_config import (
     CRIMES_COLUMNS,
@@ -97,7 +96,55 @@ def reassign_values_to_separate_db_tables() -> bool:
         return False
 
 
-def create_sql_query_for_website_responses(
+def send_query_to_db(query: str) -> any:
+    """
+    Sends a query to the database and receives a result back.
+    Args:
+        query: str
+
+    Returns:
+        query_results: any
+    """
+    engine = connect_to_db()
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    query_results = session.execute(query)
+
+    return query_results
+
+
+def get_responses():
+    """
+
+    Returns:
+
+    """
+    state = "Colorado"
+    median_household_income = 120000
+    area_feel = ["Suburban", "Dense Suburban", "Urban"]
+    is_woman = False
+    nightlife = False
+    families = True
+    schools = True
+    restaurants = True
+    bars = False
+    cafes = True
+
+    return create_db_data_from_website_responses(
+        state,
+        median_household_income,
+        area_feel,
+        is_woman,
+        nightlife,
+        families,
+        schools,
+        restaurants,
+        bars,
+        cafes,
+    )
+
+
+def create_db_data_from_website_responses(
     state: str,
     median_household_income: int,
     area_feel: list,
@@ -108,7 +155,7 @@ def create_sql_query_for_website_responses(
     restaurants: bool = False,
     bars: bool = False,
     cafes: bool = False,
-) -> str:
+) -> list:
     """
     Creating SQL query based on the user responses.
     Args:
@@ -124,7 +171,7 @@ def create_sql_query_for_website_responses(
         cafes: bool
 
     Returns:
-        query: str
+        list_of_places: list
     """
     state_query = f"WHERE \np.state = '{state}'"
     median_household_income_query = (
@@ -146,11 +193,7 @@ def create_sql_query_for_website_responses(
         bars_query = ""
     area_feel_str = ", ".join(f"'{area_type}'" for area_type in area_feel)
     area_feel_query = f"\nAND af.area_feel IN ({area_feel_str})"
-    if families or schools or nightlife:
-        order_by_query = "\nORDER BY"
-    else:
-        order_by_query = ""
-
+    order_by_query = "\nORDER BY"
     if families:
         families_query = FAMILIES_QUERY
     else:
@@ -187,7 +230,56 @@ def create_sql_query_for_website_responses(
         + sorting_query
         + limit_query
     )
-    return query
+
+    query_results = send_query_to_db(query)
+    list_of_places = []
+    for place in query_results:
+        list_of_places.append(place.unique_name)
+
+    return list_of_places
+
+
+def create_objects_for_places(list_of_places: list):
+    """
+    Creates dataclass objects for each db_data:
+        Places, Activities, Area_Feel, Crimes, Families, Wealth, Weather
+    Args:
+        list_of_places: list
+
+    Returns:
+        dataclass_objects: objects
+    """
+    places_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="Places"
+    )
+    activities_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="Activities"
+    )
+    area_feel_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="AreaFeel"
+    )
+    crimes_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="Crimes"
+    )
+    families_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="Families"
+    )
+    wealth_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="Wealth"
+    )
+    weather_objects = query_all_columns_to_dataclass(
+        list_of_places=list_of_places, table_name="Weather"
+    )
+
+    return (
+        places_objects,
+        activities_objects,
+        area_feel_objects,
+        crimes_objects,
+        families_objects,
+        wealth_objects,
+        weather_objects,
+    )
 
 
 def query_all_columns_to_dataclass(list_of_places: list, table_name: str):
@@ -220,8 +312,4 @@ def query_all_columns_to_dataclass(list_of_places: list, table_name: str):
     return dataclass_objects
 
 
-test = query_all_columns_to_dataclass(
-    ["chesterbrook-chester-pa", "north-quarter-orlando-fl"], "Weather"
-)
-for x in test:
-    print(x.temp_first_quarter)
+get_responses()
