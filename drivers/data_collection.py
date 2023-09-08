@@ -1,23 +1,29 @@
+"""
+Drivers providing a structure to data collection processes.
+get_all_data() is the main driver function
+"""
 import time
 import pandas as pd
-from data_collection_utils import googlemaps
+from utils import googlemaps
 
-from data_collection_utils.scraping_niche import (
+from utils.scraping_niche import (
     scrape_get_soup_for_places_and_links,
     get_place_names_and_links_for_page,
     scrape_get_soup_for_place_details,
 )
-from data_collection_utils.scraping_areavibes import (
+from utils.scraping_areavibes import (
     fill_missing_school_ratings,
     fill_missing_crime_values,
 )
-from data_collection_utils.scraping_niche import (
+from utils.scraping_niche import (
     scrape_ratings,
     scrape_type_of_place,
     scrape_rent_vs_own,
     scrape_population_and_real_estate,
 )
-from data_collection_utils.scraping_niche import scrape_crime_data, scrape_age_groups
+from utils.scraping_niche import scrape_crime_data, scrape_age_groups
+
+from utils import weather
 
 
 def scrape_all_places_and_links_niche(page_start: int, page_finish: int):
@@ -145,3 +151,17 @@ def google_data_getter(places_df: pd.DataFrame) -> pd.DataFrame:
         places_df, 8, ["restaurant", "bar", "cafe", "supermarket", "park", "gym"]
     )
     return places_df
+
+
+def get_all_data():
+    """
+    Driver to enable to get all data by one click and save to csv.
+    """
+    scrape_all_places_and_links_niche(1, 2000)
+    scrape_all_info_from_place_niche()
+    places_df = pd.read_csv("niche_all_scraped_data_raw.csv")
+    places_df = scrape_areavibes_and_fill_missing_data(places_df)
+    places_df = google_data_getter(places_df)
+    places_df = weather.create_temperature_df(places_df)
+    places_df = weather.fill_missing_weather_values(places_df)
+    places_df.to_csv("niche_all_scraped_data_raw.csv", index=False)

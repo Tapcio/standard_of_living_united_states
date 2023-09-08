@@ -1,3 +1,14 @@
+"""
+SQLAlchemy Dataclasses:
+    - Places
+    - Wealth
+    - Weather
+    - AreaFeel
+    - Crimes
+    - Families
+    - Activities
+"""
+
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -35,7 +46,7 @@ class Weather(Base):
 
 
 class AreaFeel(Base):
-    __tablename__ = "area_feel"
+    __tablename__ = "areafeel"
     unique_name = Column(String, primary_key=True)
     area_feel = Column(String)
     population = Column(Integer)

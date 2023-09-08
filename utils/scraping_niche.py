@@ -1,9 +1,12 @@
+"""
+Functions to scrape the main source of data.
+"""
 from bs4 import BeautifulSoup
 import re
 import requests
 import numpy as np
 
-from data_collection_config import (
+from config import (
     VIOLENT_CRIMES_COLUMNS,
     NON_VIOLENT_CRIMES_COLUMNS,
     AGE_GROUP_NAMES,

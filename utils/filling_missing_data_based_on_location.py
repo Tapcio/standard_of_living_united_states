@@ -1,7 +1,10 @@
+"""
+Functions to search for data based on the latitude and longitude. 
+"""
 import haversine as hs
 import pandas as pd
 
-from data_collection_config import AREA_WEALTH_THRESHOLD
+from config import AREA_WEALTH_THRESHOLD
 
 
 def find_closest_places(places_df: pd.DataFrame, place_index: int) -> list:

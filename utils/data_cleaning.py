@@ -1,7 +1,12 @@
+"""
+Data cleaning functions to work with raw data
+"""
 import pandas as pd
 import numpy as np
 
-from data_collection_config import US_STATES
+from db_utils import database_operations
+
+from config import US_STATES
 
 
 def remove_special_character_school_rating(school_rating: str) -> str:
@@ -221,3 +226,72 @@ def fill_missing_rent_and_home_values(places_df: pd.DataFrame) -> pd.DataFrame:
                 pass
 
     return places_df
+
+
+def fill_missing_school_ratings(places_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fills missing school ratings for purpose of model fitting. It assigns the same rating to the school rating as the
+    families_rating. This will create some small discrepancies, but on the most of the occasions the ratings are
+    similar for both. Args: places_df: pd.DataFrame
+
+    Returns:
+        places_df: pd.DataFrame
+    """
+    for index, row in places_df.iterrows():
+        if row["school_rating"] == "no data":
+            places_df.loc[index, "school_rating"] = row["families_rating"]
+        else:
+            places_df.loc[index, "school_rating"] = row["school_rating"]
+
+    return places_df
+
+
+def drop_places_with_missing_weather_data(places_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Drops places with missing temperature. There is very little places without data, so for the purpose
+    of fitting the data into the model we are dropping them.
+    Args:
+        places_df: pd.DataFrame
+    Returns:
+        places_df: pd.DataFrame
+    """
+    weather_df = database_operations.load_database_to_dataframe("weather")
+    weather_data_cols = weather_df.columns[1:]
+
+    for col in weather_data_cols:
+        for index, row in places_df.iterrows():
+            if pd.isna(row[col]):
+                places_df.drop(index, inplace=True)
+
+    return places_df
+
+
+def weather_bucketing_per_season():
+    """
+    Calculate average of each quarter of the year, so the weather table is shrunk to fewer columns.
+    """
+    weather = database_operations.load_database_to_dataframe("weather")
+    weather_columns = weather.columns[1:]
+
+    new_data = []
+    for index, row in weather.iterrows():
+        means = []
+        for i in range(0, len(weather_columns), 3):
+            mean = sum(row[weather_columns[i : i + 3]]) / 3
+            means.append(mean)
+        new_data.append(means)
+
+    new_columns = [
+        "temp_first_quarter",
+        "temp_second_quarter",
+        "temp_third_quarter",
+        "temp_fourth_quarter",
+        "prcp_first_quarter",
+        "prcp_second_quarter",
+        "prcp_third_quarter",
+        "prcp_fourth_quarter",
+    ]
+
+    new_weather = pd.DataFrame(new_data, columns=new_columns)
+    new_weather.insert(0, "unique_name", weather["unique_name"])
+    database_operations.save_dataframe_to_database(new_weather, "weather")

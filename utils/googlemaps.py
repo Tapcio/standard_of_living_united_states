@@ -1,9 +1,14 @@
+"""
+Google API functions to get latitude and longitude based on the place.
+Then using latitude and longitude to obtain area specific information,
+as google API doesn't provide search using area name anymore.
+"""
 import googlemaps
 import requests
 import time
 import concurrent.futures
 import pandas as pd
-import data_collection_utils.utils_generic as u
+import utils.utils_generic as u
 
 data = u.get_config()
 

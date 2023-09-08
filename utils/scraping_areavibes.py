@@ -1,8 +1,12 @@
+"""
+Functions used to scrape Areavibes.com website.
+To be used after Niche.com was scraped, as those are just missing data fillers.
+"""
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import numpy as np
-from data_collection_config import US_AVERAGE_CRIMES
+from config import US_AVERAGE_CRIMES
 from typing import Optional
 
 

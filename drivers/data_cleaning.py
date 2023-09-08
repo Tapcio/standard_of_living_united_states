@@ -1,6 +1,10 @@
+"""
+Drivers providing a structure to data cleaning processes.
+clean_all_data() is the main driver function
+"""
 import pandas as pd
-import data_collection_utils.data_cleaning as dc
-import data_collection_utils.filling_missing_crime_data as fc
+import utils.data_cleaning as dc
+import utils.filling_missing_crime_data as fc
 from db_utils import database_operations
 
 
@@ -71,3 +75,19 @@ def fill_remaining_crime_data():
     crimes = crimes.apply(fc.fill_nan_values_non_violent_crimes)
 
     database_operations.save_dataframe_to_database(crimes, "crimes")
+
+
+def clean_all_data():
+    """
+    Driver to clean all data and reassign to appropriate tables.
+    """
+    places_df = pd.read_csv("data_preprocessing_from_raw.csv")
+    places_df = data_preprocessing_from_raw(places_df)
+    database_operations.save_dataframe_to_database(places_df, "places_raw")
+    fill_remaining_crime_data()
+    places_df = database_operations.load_data_and_merge()
+    places_df = dc.fill_missing_school_ratings(places_df)
+    places_df = dc.drop_places_with_missing_weather_data(places_df)
+    places_df = places_df.dropna().reset_index()
+    database_operations.save_dataframe_to_database(places_df, "places_raw")
+    database_operations.reassign_values_to_separate_db_tables()

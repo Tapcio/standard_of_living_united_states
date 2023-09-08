@@ -1,8 +1,11 @@
+"""
+Crimes specific file with functions, as Crime values are the most tricky in the whole dataset.
+"""
 import haversine as hs
 import pandas as pd
 import numpy as np
 
-from data_collection_config import (
+from config import (
     AREA_WEALTH_THRESHOLD,
     US_AVERAGE_CRIMES,
     VIOLENT_CRIMES_COLUMNS,

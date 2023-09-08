@@ -1,7 +1,10 @@
+"""
+Functions for temperature and Precipitation data collection.
+"""
 from datetime import datetime
 from meteostat import Monthly, Point
 import pandas as pd
-from data_collection_config import MONTH_NAMES
+from config import MONTH_NAMES
 
 
 def return_average_monthly_temp(latitude: float, longitude: float) -> pd.DataFrame:

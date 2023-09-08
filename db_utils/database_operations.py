@@ -1,9 +1,20 @@
+"""
+database_operations contain:
+    - loading database to the dataframe
+    - saving dataframe to the database
+    - merging dataframes and reassigning data to appropriate tables
+    - sending queries to the database based on the specific input
+    - loading data from SQLAlchemy dataclasses
+"""
 import pandas as pd
-from sqlalchemy.orm import sessionmaker
 
-from db_utils.database_connection import connect_to_db, disconnect_from_db
+from db_utils.database_connection import (
+    connect_to_db,
+    disconnect_from_db,
+    create_sqlalchemy_session,
+)
 
-from data_collection_config import (
+from config import (
     CRIMES_COLUMNS,
     ACTIVITIES_COLUMNS,
     AREA_FEEL_COLUMNS,
@@ -12,11 +23,22 @@ from data_collection_config import (
     PLACES_COLUMNS,
 )
 
-from data_collection_config import (
+from config import (
     SELECT_PART,
     FAMILIES_QUERY,
     SCHOOLS_QUERY,
     NIGHTLIFE_QUERY,
+)
+
+
+from db_utils.data_classes import (
+    Places,
+    Activities,
+    AreaFeel,
+    Crimes,
+    Families,
+    Wealth,
+    Weather,
 )
 
 
@@ -105,9 +127,7 @@ def send_query_to_db(query: str) -> any:
     Returns:
         query_results: any
     """
-    engine = connect_to_db()
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    session = create_sqlalchemy_session()
     query_results = session.execute(query)
 
     return query_results
@@ -115,9 +135,7 @@ def send_query_to_db(query: str) -> any:
 
 def get_responses():
     """
-
-    Returns:
-
+    Now it has dummy responses. To be replaced once the front-end is done.
     """
     state = "Colorado"
     median_household_income = 120000
@@ -239,77 +257,193 @@ def create_db_data_from_website_responses(
     return list_of_places
 
 
-def create_objects_for_places(list_of_places: list):
+def get_object_variables_from_places_db(place_name: str) -> tuple:
     """
-    Creates dataclass objects for each db_data:
-        Places, Activities, Area_Feel, Crimes, Families, Wealth, Weather
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
     Args:
-        list_of_places: list
-
+        place_name: str
     Returns:
-        dataclass_objects: objects
+        name: str
+        type_of_place: str
+        state: str
+        link: str
     """
-    places_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="Places"
-    )
-    activities_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="Activities"
-    )
-    area_feel_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="AreaFeel"
-    )
-    crimes_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="Crimes"
-    )
-    families_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="Families"
-    )
-    wealth_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="Wealth"
-    )
-    weather_objects = query_all_columns_to_dataclass(
-        list_of_places=list_of_places, table_name="Weather"
-    )
+    session = create_sqlalchemy_session()
+    place = session.query(Places).filter_by(unique_name=place_name).first()
+
+    name = place.name
+    type_of_place = place.type_of_place
+    state = place.state
+    link = place.link
+
+    return name, type_of_place, state, link
+
+
+def get_object_variables_from_activities_db(place_name: str) -> tuple:
+    """
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
+    Args:
+        place_name: str
+    Returns:
+        nightlife_rating: str
+        restaurants: int
+        bars: int
+        cafes: int
+    """
+    session = create_sqlalchemy_session()
+    activity = session.query(Activities).filter_by(unique_name=place_name).first()
+
+    nightlife_rating = activity.nightlife_rating
+    restaurants = activity.restaurants
+    bars = activity.bars
+    cafes = activity.cafes
+
+    return nightlife_rating, restaurants, bars, cafes
+
+
+def get_object_variables_from_area_feel_db(place_name: str) -> tuple:
+    """
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
+    Args:
+        place_name: str
+    Returns:
+        under_ten: int
+        ten_to_seventeen: int
+        eighteen_to_twentyfour: int
+        twentyfive_to_thirtyfour: int
+        thirtyfive_to_fourtyfour: int
+        fourtyfive_to_fiftyfour: int
+        fiftyfive_to_sixtyfour: int
+        over_sixtyfive: int
+    """
+    session = create_sqlalchemy_session()
+    area_feels = session.query(AreaFeel).filter_by(unique_name=place_name).first()
+
+    area_feel = area_feels.area_feel
+    population = area_feels.population
+    under_ten = area_feels.under_ten
+    ten_to_seventeen = area_feels.ten_to_seventeen
+    eighteen_to_twentyfour = area_feels.eighteen_to_twentyfour
+    twentyfive_to_thirtyfour = area_feels.twentyfive_to_thirtyfour
+    thirtyfive_to_fourtyfour = area_feels.thirtyfive_to_fourtyfour
+    fourtyfive_to_fiftyfour = area_feels.fourtyfive_to_fiftyfour
+    fiftyfive_to_sixtyfour = area_feels.fiftyfive_to_sixtyfour
+    over_sixtyfive = area_feels.over_sixtyfive
 
     return (
-        places_objects,
-        activities_objects,
-        area_feel_objects,
-        crimes_objects,
-        families_objects,
-        wealth_objects,
-        weather_objects,
+        area_feel,
+        population,
+        under_ten,
+        ten_to_seventeen,
+        eighteen_to_twentyfour,
+        twentyfive_to_thirtyfour,
+        thirtyfive_to_fourtyfour,
+        fourtyfive_to_fiftyfour,
+        fiftyfive_to_sixtyfour,
+        over_sixtyfive,
     )
 
 
-def query_all_columns_to_dataclass(list_of_places: list, table_name: str):
+def get_object_variables_from_crimes_db(place_name: str) -> tuple:
     """
-    Returns results of a query as data_classes.Places objects.
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
     Args:
-        list_of_places: list -> List of unique places
-        table_name: str -> Name of the table in the database and sqlalchemy class
+        place_name: str
     Returns:
-        dataclass_objects: objects
+        assault: float
+        murder: float
+        rape: float
+        robbery: float
+        burglary: float
+        theft: float
+        motor_vehicle_theft: float
     """
-    class_table = globals().get(table_name)
-    if class_table is None:
-        raise ValueError(f"Class for table '{table_name}' is not defined.")
-    columns = class_table.__table__.columns
-    unique_places = ", ".join(f"'{place}'" for place in list_of_places)
+    session = create_sqlalchemy_session()
+    crime = session.query(Crimes).filter_by(unique_name=place_name).first()
 
-    query = f"SELECT * FROM {table_name.lower()} WHERE unique_name IN ({unique_places})"
+    assault = crime.assault
+    murder = crime.murder
+    rape = crime.rape
+    robbery = crime.robbery
+    burglary = crime.burglary
+    theft = crime.theft
+    motor_vehicle_theft = crime.motor_vehicle_theft
 
-    engine = connect_to_db()
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    query_results = session.execute(query)
-
-    dataclass_objects = [
-        class_table(**{column.key: getattr(row, column.key) for column in columns})
-        for row in query_results
-    ]
-
-    return dataclass_objects
+    return assault, murder, rape, robbery, burglary, theft, motor_vehicle_theft
 
 
-get_responses()
+def get_object_variables_from_families_db(place_name: str) -> tuple:
+    """
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
+    Args:
+        place_name: str
+    Returns:
+          school_rating: str
+          families_rating: str
+    """
+    session = create_sqlalchemy_session()
+    families = session.query(Families).filter_by(unique_name=place_name).first()
+
+    school_rating = families.school_rating
+    families_rating = families.families_rating
+
+    return school_rating, families_rating
+
+
+def get_object_variables_from_wealth_db(place_name: str) -> tuple:
+    """
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
+    Args:
+        place_name: str
+    Returns:
+        median_home_value: int
+        median_rent: int
+        median_household_income: int
+    """
+    session = create_sqlalchemy_session()
+    wealth = session.query(Wealth).filter_by(unique_name=place_name).first()
+
+    median_home_value = wealth.median_home_value
+    median_rent = wealth.median_rent
+    median_household_income = wealth.median_household_income
+
+    return median_home_value, median_rent, median_household_income
+
+
+def get_object_variables_from_weather_db(place_name: str) -> tuple:
+    """
+    Retrieves object attributes from the database using sqlalchemy dataclasses.
+    Args:
+        place_name: str
+    Returns:
+        temp_first_quarter: float
+        temp_second_quarter: float
+        temp_third_quarter: float
+        temp_fourth_quarter: float
+        prcp_first_quarter: float
+        prcp_second_quarter: float
+        prcp_third_quarter: float
+        prcp_fourth_quarter: float
+    """
+    session = create_sqlalchemy_session()
+    weather = session.query(Weather).filter_by(unique_name=place_name).first()
+
+    temp_first_quarter = weather.temp_first_quarter
+    temp_second_quarter = weather.temp_second_quarter
+    temp_third_quarter = weather.temp_third_quarter
+    temp_fourth_quarter = weather.temp_fourth_quarter
+    prcp_first_quarter = weather.prcp_first_quarter
+    prcp_second_quarter = weather.prcp_second_quarter
+    prcp_third_quarter = weather.prcp_third_quarter
+    prcp_fourth_quarter = weather.prcp_fourth_quarter
+
+    return (
+        temp_first_quarter,
+        temp_second_quarter,
+        temp_third_quarter,
+        temp_fourth_quarter,
+        prcp_first_quarter,
+        prcp_second_quarter,
+        prcp_third_quarter,
+        prcp_fourth_quarter,
+    )

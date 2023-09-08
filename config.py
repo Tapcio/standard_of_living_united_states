@@ -1,4 +1,4 @@
-import data_collection_utils.utils_generic as u
+import utils.utils_generic as u
 
 data = u.get_config(
     loc=r"C:\Users\adamz\PycharmProjects\standard_of_living_united_states\config.yml"
