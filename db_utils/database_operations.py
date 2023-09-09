@@ -307,6 +307,8 @@ def get_object_variables_from_area_feel_db(place_name: str) -> tuple:
     Args:
         place_name: str
     Returns:
+        area_feel: str
+        population: int
         under_ten: int
         ten_to_seventeen: int
         eighteen_to_twentyfour: int
