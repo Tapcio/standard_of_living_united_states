@@ -15,11 +15,12 @@ from config import (
 
 def find_closest_places(places_df: pd.DataFrame, place_index: int) -> list:
     """
-    Searches for closest places in the 5km radius. Returns list with sorted
-    places by the closest distance.
+    Search for closest places in the 5km radius.
     Args:
         places_df: pd.DataFrame
         place_index: int
+    Returns:
+        closest_places: list -> list of closest places sorted starting from the closest place.
     """
     selected_row = places_df.loc[place_index]
     selected_state = selected_row["state"]

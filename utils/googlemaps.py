@@ -4,13 +4,16 @@ Then using latitude and longitude to obtain area specific information,
 as google API doesn't provide search using area name anymore.
 """
 import googlemaps
+from googlemaps import Client
 import requests
 import time
 import concurrent.futures
 import pandas as pd
 import utils.utils_generic as u
 
-data = u.get_config()
+data = u.get_config(
+    loc=r"C:\Users\adamz\PycharmProjects\standard_of_living_united_states\config.yml"
+)
 
 GOOGLE_MAPS_API_KEY = data["GOOGLE_MAPS_API_KEY"]
 
