@@ -7,6 +7,7 @@ database_operations contain:
     - loading data from SQLAlchemy dataclasses
 """
 import pandas as pd
+from toolz import pipe
 
 from db_utils.database_connection import (
     connect_to_db,
@@ -448,4 +449,17 @@ def get_object_variables_from_weather_db(place_name: str) -> tuple:
         prcp_second_quarter,
         prcp_third_quarter,
         prcp_fourth_quarter,
+    )
+
+
+def return_places(responses):
+    pipe(
+        responses,
+        create_db_data_from_website_responses,
+        get_object_variables_from_places_db,
+        get_object_variables_from_wealth_db,
+        get_object_variables_from_activities_db,
+        get_object_variables_from_area_feel_db,
+        get_object_variables_from_crimes_db,
+        get_object_variables_from_families_db,
     )
